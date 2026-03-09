@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      - /app/node_modules # ホスト側のnode_modulesで上書きされないようにする匿名ボリューム
+    environment:
+      - CHOKIDAR_USEPOLLING=true # ホットリロードを確実に機能させるため

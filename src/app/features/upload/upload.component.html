@@ -1,0 +1,61 @@
+<mat-stepper [linear]="true" #stepper>
+
+	<mat-step label="動画の選択" [completed]="hasFile">
+		<div class="step-content">
+			<div class="upload-container">
+				<div class="drop-zone" [class.dragging]="isDragging" (dragover)="onDragOver($event)"
+					(dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+					@if (!hasFile){
+					<p>ここに動画をドラッグ＆ドロップ</p>
+					<p>または</p>
+					}@else{
+					<p>選択されたファイル: {{ selectedFile?.name }}</p>
+					}
+					<input type="file" #fileInput style="display: none;" accept="video/*,.avi,.mkv,.wmv,.flv,.webm"
+						(change)="onFileSelected($event)">
+					<button matButton="elevated" (click)="fileInput.click()">ファイルを選択</button>
+				</div>
+			</div>
+		</div>
+	</mat-step>
+
+	<mat-step label="基本情報の入力" [completed]="videoForm.valid && isUploadStarted">
+
+		<div class="step-content form-container">
+			<form [formGroup]="videoForm">
+				<mat-form-field appearance="outline" class="full-width">
+					<mat-label>動画のタイトル (必須)</mat-label>
+					<input matInput formControlName="title" required>
+				</mat-form-field>
+
+				<mat-form-field appearance="outline" class="full-width">
+					<mat-label>動画の説明</mat-label>
+					<textarea matInput formControlName="description" rows="5" class="no-resize"></textarea>
+				</mat-form-field>
+
+				<div class="button-actions">
+					<button mat-stroked-button matStepperPrevious type="button">戻る</button>
+
+					<button mat-flat-button color="primary" type="button" [disabled]="videoForm.invalid"
+						(click)="startUpload()">
+						アップロード開始
+					</button>
+				</div>
+			</form>
+		</div>
+	</mat-step>
+
+	<mat-step label="アップロード" [editable]="false">
+		<div class="step-content">
+			<p>進捗プログレスバーを出すよ</p>
+		</div>
+	</mat-step>
+
+	<mat-step label="完了" [editable]="false">
+		<div class="step-content">
+			<h3>アップロードが完了しました！</h3>
+			<button mat-button>トップへ戻る</button>
+		</div>
+	</mat-step>
+
+</mat-stepper>

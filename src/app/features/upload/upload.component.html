@@ -47,7 +47,13 @@
 
 	<mat-step label="アップロード" [editable]="false">
 		<div class="step-content">
-			<p>進捗プログレスバーを出すよ</p>
+
+			<h3>{{ uploadStatusMessage }}</h3>
+
+			<mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+
+			<p style="text-align: right; margin-top: 8px;">{{ uploadProgress }} %</p>
+
 		</div>
 	</mat-step>
 

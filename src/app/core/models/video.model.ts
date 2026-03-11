@@ -4,7 +4,7 @@ export interface Video {
 	description: string;
 	url: string;
 	thumbnailUrl: string;
-	upload_url: string;
+	uploadUrl: string;
 	upload_thumbnail_url: string;
 	created_at: string;
 	viewCount: number;

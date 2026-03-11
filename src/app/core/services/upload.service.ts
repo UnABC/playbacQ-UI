@@ -9,13 +9,12 @@ export class UploadService {
   private http = inject(HttpClient);
 
   uploadToMinio(presignedUrl: string, file: File): Observable<HttpEvent<any>> {
-    const headers = new HttpHeaders({
-      'Content-Type': file.type,
-    });
-    const req = new HttpRequest('PUT', presignedUrl, file, {
+    return this.http.put(presignedUrl, file, {
+      headers: {
+        'Content-Type': file.type,
+      },
       reportProgress: true,
-      headers: headers,
+      observe: 'events',
     });
-    return this.http.request(req);
   }
 }

@@ -10,7 +10,7 @@ import { switchMap, takeWhile } from 'rxjs/operators';
 })
 export class VideoService {
   private http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/videos';
+  private readonly apiUrl = '/api/videos';
 
   getVideos(params: any): Observable<Video[]> {
     return this.http.get<Video[]>(this.apiUrl, { params });
@@ -28,7 +28,7 @@ export class VideoService {
     return this.http.post<Video>(this.apiUrl, { title, description });
   }
 
-  pollUploadProgress(videoId: string, intervalMs: number = 2000): Observable<any> {
+  pollUploadProgress(videoId: string, intervalMs: number = 1000): Observable<any> {
     return interval(intervalMs).pipe(
       switchMap(() => this.getVideoProgress(videoId)),
       takeWhile((res) => res.status !== 'completed' && res.status !== 'failed', true),

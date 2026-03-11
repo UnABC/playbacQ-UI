@@ -11,7 +11,7 @@ export class UploadService {
   uploadToMinio(presignedUrl: string, file: File): Observable<HttpEvent<any>> {
     return this.http.put(presignedUrl, file, {
       headers: {
-        'Content-Type': file.type,
+        'Content-Type': 'video/mp4',
       },
       reportProgress: true,
       observe: 'events',

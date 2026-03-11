@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { VideoService } from '../../core/services/video.service';
 import { UploadService } from '../../core/services/upload.service';
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
@@ -34,6 +34,7 @@ import { switchMap, tap, filter } from 'rxjs/operators';
 export class UploadComponent {
   videoService = inject(VideoService);
   uploadService = inject(UploadService);
+  changeDetector = inject(ChangeDetectorRef);
   isDragging = false;
   isUploadStarted = false;
 
@@ -119,22 +120,26 @@ export class UploadComponent {
                 if (event.type === HttpEventType.UploadProgress && event.total) {
                   this.uploadProgress = Math.round((100 * event.loaded) / event.total);
                 }
+                this.changeDetector.detectChanges();
               }),
               // アップロード中(Progress)のイベントはここで堰き止め、完了(Response)だけを下へ流す
               filter((event) => event.type === HttpEventType.Response),
               switchMap(() => {
                 this.uploadStatusMessage = 'バックエンドでエンコード処理中...';
                 this.uploadProgress = 0;
-                return this.videoService.pollUploadProgress(videos.id).pipe(
+                return this.videoService.pollUploadProgress(videos.video_id).pipe(
                   tap((progress) => {
                     this.uploadStatusMessage = `エンコード処理中... (${progress.progress}%)`;
                     this.uploadProgress = progress.progress;
-                    if (progress.status === 'completed') {
+                    this.changeDetector.detectChanges();
+                    if (progress.status === 2) {
                       this.uploadStatusMessage = 'アップロードとエンコードが完了しました！';
-                    } else if (progress.status === 'failed') {
+                    } else if (progress.status === 3) {
                       this.uploadStatusMessage = 'エンコードに失敗しました。';
                     }
-                  })
+                  }),
+                  // completedまたはfailedのステータスが返るまでポーリングを続ける
+                  filter((progress) => progress.status === 2 || progress.status === 3),
                 );
               }),
             );

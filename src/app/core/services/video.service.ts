@@ -21,7 +21,8 @@ export class VideoService {
   }
 
   getVideoProgress(id: string): Observable<Progress> {
-    return this.http.get<Progress>(`${this.apiUrl}/${id}/progress`);
+    // キャッシュを防ぐためにクエリパラメータにタイムスタンプを追加
+    return this.http.get<Progress>(`${this.apiUrl}/${id}/progress?t=${new Date().getTime()}`);
   }
 
   createVideo(title: string, description: string): Observable<Video> {
@@ -31,7 +32,8 @@ export class VideoService {
   pollUploadProgress(videoId: string, intervalMs: number = 1000): Observable<any> {
     return interval(intervalMs).pipe(
       switchMap(() => this.getVideoProgress(videoId)),
-      takeWhile((res) => res.status !== 'completed' && res.status !== 'failed', true),
+      // completedまたはfailedのステータスが返るまでポーリングを続ける
+      takeWhile((res) => res.status !== 2 && res.status !== 3, true),
     );
   }
 }

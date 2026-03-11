@@ -1,6 +1,6 @@
 <mat-stepper [linear]="true" #stepper>
 
-	<mat-step label="動画の選択" [completed]="hasFile">
+	<mat-step label="動画の選択" [completed]="hasFile" [editable]="!isUploadStarted">
 		<div class="step-content">
 			<div class="upload-container">
 				<div class="drop-zone" [class.dragging]="isDragging" (dragover)="onDragOver($event)"
@@ -19,7 +19,7 @@
 		</div>
 	</mat-step>
 
-	<mat-step label="基本情報の入力" [completed]="videoForm.valid && isUploadStarted">
+	<mat-step label="基本情報の入力" [completed]="videoForm.valid && isUploadStarted" [editable]="!isUploadStarted">
 
 		<div class="step-content form-container">
 			<form [formGroup]="videoForm">

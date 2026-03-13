@@ -85,6 +85,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
           },
         });
         if (this.player !== null) {
+          const countViewTime = Math.min((this.videoMetadata?.duration ?? 0) / 4, 300) * 1000;
           this.player.on('playing', () => {
             if (!this.hasCountedView) {
               // 再生が始まったら10秒後にカウントAPIを叩くタイマーをセット！
@@ -93,7 +94,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
                   console.log('View count incremented for video ID:', this.videoId);
                   this.hasCountedView = true;
                 });
-              }, 10000); // 10秒 (10000ミリ秒)
+              }, countViewTime);
             }
           });
 

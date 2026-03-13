@@ -9,6 +9,8 @@ export interface Video {
   thumbUploadUrl: string;
   created_at: string;
   view_count: number;
+  duration: number;
+  like_count: number;
   status: number;
 }
 

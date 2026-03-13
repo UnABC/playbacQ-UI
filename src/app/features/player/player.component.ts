@@ -15,10 +15,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { VideoService } from '../../core/services/video.service';
 import { Video } from '../../core/models/video.model';
+import { LinkifyPipe } from '../../shared/pipes/linkify-pipe';
+import Plyr from 'plyr';
 
 @Component({
   selector: 'app-video-player',
-  imports: [CommonModule, MatProgressSpinnerModule, MatCardModule, MatDividerModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatCardModule, MatDividerModule, LinkifyPipe],
   templateUrl: './player.component.html',
   styleUrls: ['./player.component.css'],
 })
@@ -30,6 +32,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private hls: Hls | null = null;
   private videoId: string = '';
+  private player: Plyr | null = null;
 
   isLoading = true;
   videoMetadata: Video | null = null;
@@ -55,6 +58,20 @@ export class PlayerComponent implements OnInit, OnDestroy {
       this.hls.attachMedia(video);
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        this.player = new Plyr(video, {
+          controls: [
+            'play-large',
+            'play',
+            'progress',
+            'current-time',
+            'mute',
+            'volume',
+            'settings',
+            'fullscreen',
+          ],
+          settings: ['captions', 'quality', 'speed', 'loop'],
+          speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 2] },
+        });
         this.isLoading = false;
         this.cdr.detectChanges();
       });

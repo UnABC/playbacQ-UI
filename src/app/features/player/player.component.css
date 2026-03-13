@@ -1,3 +1,4 @@
+@import 'plyr/dist/plyr.css';
 .player-container {
   max-width: 1000px; /* 大画面でも広がりすぎないように制限 */
   margin: 0 auto;    /* 画面の中央に配置 */

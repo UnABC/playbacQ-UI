@@ -183,6 +183,48 @@ export class PlayerComponent implements OnInit, OnDestroy {
     }
   }
 
+  isCommandMenuOpen = false;
+  toggleCommandMenu(): void {
+    this.isCommandMenuOpen = !this.isCommandMenuOpen;
+  }
+
+  // コマンドの定義一覧
+  private readonly CMD_COLORS = [
+    'white',
+    'black',
+    'gray',
+    'brown',
+    'green',
+    'water',
+    'blue',
+    'yellow',
+    'orange',
+    'red',
+  ];
+  private readonly CMD_POSITIONS = ['ue', 'shita', 'naka'];
+  private readonly CMD_SIZES = ['big', 'medium', 'small'];
+
+  toggleCommand(cmd: string, cmdInput: HTMLInputElement): void {
+    let currentCmds = cmdInput.value
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((c) => c !== '');
+    const isColor = this.CMD_COLORS.includes(cmd);
+    const isPos = this.CMD_POSITIONS.includes(cmd);
+    const isSize = this.CMD_SIZES.includes(cmd);
+
+    if (isColor) currentCmds = currentCmds.filter((c) => !this.CMD_COLORS.includes(c));
+    if (isPos) currentCmds = currentCmds.filter((c) => !this.CMD_POSITIONS.includes(c));
+    if (isSize) currentCmds = currentCmds.filter((c) => !this.CMD_SIZES.includes(c));
+
+    currentCmds.push(cmd);
+    cmdInput.value = currentCmds.join(' ');
+  }
+
+  sendComment(): void {
+    // TODO: コメント送信APIを呼び出す処理を実装
+  }
+
   ngOnDestroy(): void {
     if (this.hls) {
       this.hls.destroy();

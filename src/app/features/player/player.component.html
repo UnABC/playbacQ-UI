@@ -2,9 +2,52 @@
   <div class="video-wrapper">
     <video #videoElement crossorigin="anonymous" class="video-element"></video>
 
+    <canvas #danmakuCanvas class="danmaku-canvas"></canvas>
+
     <div *ngIf="isLoading" class="spinner-overlay">
       <mat-spinner diameter="50"></mat-spinner>
     </div>
+  </div>
+
+  <div class="comment-bar">
+
+    <button class="command-toggle-btn" (click)="toggleCommandMenu()" title="コマンド設定">
+      ⚙️ </button>
+
+    <div class="command-menu" [class.open]="isCommandMenuOpen">
+      <div class="color-palette">
+        <div class="color-swatch" style="background: #FFFFFF;" title="white"
+          (click)="toggleCommand('white', commandInput)"></div>
+        <div class="color-swatch" style="background: #000000;" title="black"
+          (click)="toggleCommand('black', commandInput)">
+        </div>
+        <div class="color-swatch" style="background: #808080;" title="gray"
+          (click)="toggleCommand('gray', commandInput)">
+        </div>
+        <div class="color-swatch" style="background: #7F4001;" title="brown"
+          (click)="toggleCommand('brown', commandInput)">
+        </div>
+        <div class="color-swatch" style="background: #238F23;" title="green"
+          (click)="toggleCommand('green', commandInput)"></div>
+        <div class="color-swatch" style="background: #B2ECED;" title="water"
+          (click)="toggleCommand('water', commandInput)"></div>
+        <div class="color-swatch" style="background: #0000FF;" title="blue"
+          (click)="toggleCommand('blue', commandInput)">
+        </div>
+        <div class="color-swatch" style="background: #FFFF00;" title="yellow"
+          (click)="toggleCommand('yellow', commandInput)"></div>
+        <div class="color-swatch" style="background: #FF8000;" title="orange"
+          (click)="toggleCommand('orange', commandInput)"></div>
+        <div class="color-swatch" style="background: #FF0000;" title="red" (click)="toggleCommand('red', commandInput)">
+        </div>
+      </div>
+
+      <input #commandInput type="text" class="command-input cmd-box" placeholder="コマンド (例: ue red small)">
+    </div>
+
+    <input #commentInput type="text" class="comment-input" placeholder="コメントを入力して弾幕を流す..."
+      (keyup.enter)="sendComment()">
+    <button class="comment-send-btn" (click)="sendComment()">送信</button>
   </div>
 
   <mat-card *ngIf="videoMetadata" class="metadata-card">

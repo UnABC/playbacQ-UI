@@ -25,11 +25,15 @@ export class VideoService {
     return this.http.get<Progress>(`${this.apiUrl}/${id}/progress?t=${new Date().getTime()}`);
   }
 
+  incrementViewCount(id: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/views`, {});
+  }
+
   createVideo(title: string, description: string): Observable<Video> {
     return this.http.post<Video>(this.apiUrl, { title, description });
   }
 
-  pollUploadProgress(videoId: string, intervalMs: number = 1000): Observable<any> {
+  pollUploadProgress(videoId: string, intervalMs: number = 500): Observable<any> {
     return interval(intervalMs).pipe(
       switchMap(() => this.getVideoProgress(videoId)),
       // completedまたはfailedのステータスが返るまでポーリングを続ける

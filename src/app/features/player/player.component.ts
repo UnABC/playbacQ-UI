@@ -16,7 +16,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { VideoService } from '../../core/services/video.service';
 import { Video } from '../../core/models/video.model';
 import { LinkifyPipe } from '../../shared/pipes/linkify-pipe';
-import Plyr from 'plyr';
+import * as Plyr_ from 'plyr';
+import type PlyrType from 'plyr';
+const Plyr = (Plyr_ as any).default || Plyr_;
+type Plyr = PlyrType;
 
 @Component({
   selector: 'app-video-player',
@@ -33,6 +36,8 @@ export class PlayerComponent implements OnInit, OnDestroy {
   private hls: Hls | null = null;
   private videoId: string = '';
   private player: Plyr | null = null;
+  private viewTimer: any;
+  private hasCountedView = false;
 
   isLoading = true;
   videoMetadata: Video | null = null;
@@ -69,11 +74,36 @@ export class PlayerComponent implements OnInit, OnDestroy {
             'settings',
             'fullscreen',
           ],
-          settings: ['captions', 'quality', 'speed', 'loop'],
-          speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 2] },
+          settings: ['quality', 'speed', 'loop'],
+          keyboard: { focused: true, global: true },
+          tooltips: { controls: true, seek: true },
+          storage: { enabled: true, key: 'playbacq-plyr' },
+          speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 1.75, 2, 3] },
+          previewThumbnails: {
+            enabled: true,
+            src: `/api/videos/${this.videoId}/vtt`,
+          },
         });
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        if (this.player !== null) {
+          this.player.on('playing', () => {
+            if (!this.hasCountedView) {
+              // 再生が始まったら10秒後にカウントAPIを叩くタイマーをセット！
+              this.viewTimer = setTimeout(() => {
+                this.videoService.incrementViewCount(this.videoId).subscribe(() => {
+                  console.log('View count incremented for video ID:', this.videoId);
+                  this.hasCountedView = true;
+                });
+              }, 10000); // 10秒 (10000ミリ秒)
+            }
+          });
+
+          // 一時停止やシーク（飛ばし）を検知したらタイマーを潰す！
+          this.player.on('pause', () => clearTimeout(this.viewTimer));
+          this.player.on('seeking', () => clearTimeout(this.viewTimer));
+
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }
       });
 
       this.hls.on(Hls.Events.ERROR, (event: Events.ERROR, data: ErrorData) => {

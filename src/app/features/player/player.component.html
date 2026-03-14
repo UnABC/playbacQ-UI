@@ -29,8 +29,8 @@
         </div>
         <div class="color-swatch" style="background: #238F23;" title="green"
           (click)="toggleCommand('green', commandInput)"></div>
-        <div class="color-swatch" style="background: #B2ECED;" title="water"
-          (click)="toggleCommand('water', commandInput)"></div>
+        <div class="color-swatch" style="background: #B2ECED;" title="cyan"
+          (click)="toggleCommand('cyan', commandInput)"></div>
         <div class="color-swatch" style="background: #0000FF;" title="blue"
           (click)="toggleCommand('blue', commandInput)">
         </div>
@@ -45,7 +45,7 @@
       <input #commandInput type="text" class="command-input cmd-box" placeholder="コマンド (例: ue red small)">
     </div>
 
-    <input #commentInput type="text" class="comment-input" placeholder="コメントを入力して弾幕を流す..."
+    <input #commentInput type="text" class="comment-input" placeholder="コメント..."
       (keyup.enter)="sendComment()">
     <button class="comment-send-btn" (click)="sendComment()">送信</button>
   </div>

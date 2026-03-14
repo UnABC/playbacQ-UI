@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { VideoService } from '../../core/services/video.service';
+import { CommentService } from '../../core/services/comment.service';
 import { Video } from '../../core/models/video.model';
 import { LinkifyPipe } from '../../shared/pipes/linkify-pipe';
 import * as Plyr_ from 'plyr';
@@ -29,9 +30,12 @@ type Plyr = PlyrType;
 })
 export class PlayerComponent implements OnInit, OnDestroy {
   @ViewChild('videoElement', { static: true }) videoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('commentInput') commentInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('commandInput') commandInputRef!: ElementRef<HTMLInputElement>;
 
   private route = inject(ActivatedRoute);
   private videoService = inject(VideoService);
+  private commentService = inject(CommentService);
   private cdr = inject(ChangeDetectorRef);
   private hls: Hls | null = null;
   private videoId: string = '';
@@ -195,7 +199,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
     'gray',
     'brown',
     'green',
-    'water',
+    'cyan',
     'blue',
     'yellow',
     'orange',
@@ -222,7 +226,22 @@ export class PlayerComponent implements OnInit, OnDestroy {
   }
 
   sendComment(): void {
-    // TODO: コメント送信APIを呼び出す処理を実装
+    if (!this.player) {
+      console.warn('Player is not initialized yet. Cannot send comment.');
+      return;
+    }
+    const commentText = this.commentInputRef.nativeElement.value.trim();
+    const commandText = this.commandInputRef.nativeElement.value.trim();
+    if (!commentText) {
+      return;
+    }
+    const currentTime = this.player?.currentTime ?? 0;
+    this.commentService
+      .postComment(this.videoId, commentText, currentTime, commandText)
+      .subscribe(() => {
+        console.log('Comment:', commentText, 'at', currentTime, 'with commands:', commandText);
+      });
+    this.commentInputRef.nativeElement.value = '';
   }
 
   ngOnDestroy(): void {

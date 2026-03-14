@@ -19,6 +19,7 @@ export interface Comment {
   content: string;
   created_at: string;
   timestamp: number;
+  command: string;
   userId: string;
 }
 

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { Subject, Observable } from 'rxjs';
+import { Comment } from '../models/video.model';
 
 @Injectable({
   providedIn: 'root',
@@ -43,6 +44,10 @@ export class CommentService {
       this.socket$.complete();
       this.socket$ = null;
     }
+  }
+
+  getComments(videoId: string): Observable<Comment[]> {
+    return this.http.get<Comment[]>(`/api/videos/${videoId}/comments`);
   }
 
   postComment(

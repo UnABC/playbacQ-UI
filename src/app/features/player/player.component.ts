@@ -6,6 +6,7 @@ import {
   OnInit,
   OnDestroy,
   ChangeDetectorRef,
+  AfterViewInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -17,6 +18,7 @@ import { Subscription } from 'rxjs';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
 import { Video } from '../../core/models/video.model';
+import { Comment } from './comment';
 import { LinkifyPipe } from '../../shared/pipes/linkify-pipe';
 import * as Plyr_ from 'plyr';
 import type PlyrType from 'plyr';
@@ -29,10 +31,11 @@ type Plyr = PlyrType;
   templateUrl: './player.component.html',
   styleUrls: ['./player.component.css'],
 })
-export class PlayerComponent implements OnInit, OnDestroy {
+export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('videoElement', { static: true }) videoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('commentInput') commentInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('commandInput') commandInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('commentCanvas') commentCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   private route = inject(ActivatedRoute);
   private videoService = inject(VideoService);
@@ -44,6 +47,9 @@ export class PlayerComponent implements OnInit, OnDestroy {
   private viewTimer: any;
   private hasCountedView = false;
   private commentSubscription: Subscription | null = null;
+  private ctx!: CanvasRenderingContext2D;
+  private animationFrameId: number = 0;
+  private comments: Comment[] = [];
 
   isLoading = true;
   videoMetadata: Video | null = null;
@@ -55,12 +61,46 @@ export class PlayerComponent implements OnInit, OnDestroy {
         this.videoMetadata = video;
       });
       this.initPlayer();
+      this.commentService.getComments(this.videoId).subscribe((comments) => {
+        comments.map((c) => {
+          this.comments.push(new Comment(c.comment, c.timestamp, c.command));
+        });
+      });
+
+      this.startCommentLoop();
       this.commentService.connect(this.videoId);
       this.commentSubscription = this.commentService.messages$.subscribe((msg) => {
         console.log('Received comment via WebSocket:', msg);
-        // TODO: Canvasに描画
+        this.comments.push(new Comment(msg.content, msg.timestamp, msg.command));
       });
     });
+  }
+
+  ngAfterViewInit(): void {
+    const canvas = this.commentCanvasRef.nativeElement;
+    canvas.width = 1920;
+    canvas.height = 1080;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    this.ctx = canvas.getContext('2d')!;
+  }
+
+  startCommentLoop(): void {
+    const loop = () => {
+      if (!this.ctx || !this.player) {
+        this.animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+
+      this.ctx.clearRect(0, 0, 1920, 1080);
+
+      for (const comment of this.comments) {
+        comment.draw(this.ctx, this.player.currentTime);
+      }
+      // 次のフレームを予約
+      this.animationFrameId = requestAnimationFrame(loop);
+    };
+    this.animationFrameId = requestAnimationFrame(loop);
   }
 
   initPlayer(): void {
@@ -74,48 +114,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
       this.hls.attachMedia(video);
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        this.player = new Plyr(video, {
-          controls: [
-            'play-large',
-            'play',
-            'progress',
-            'current-time',
-            'mute',
-            'volume',
-            'settings',
-            'fullscreen',
-          ],
-          settings: ['quality', 'speed', 'loop'],
-          keyboard: { focused: true, global: true },
-          tooltips: { controls: true, seek: true },
-          storage: { enabled: true, key: 'playbacq-plyr' },
-          speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 1.75, 2, 3] },
-          previewThumbnails: {
-            enabled: true,
-            src: `/api/videos/${this.videoId}/vtt`,
-          },
-        });
-        if (this.player !== null) {
-          const countViewTime = Math.min((this.videoMetadata?.duration ?? 0) / 4, 300) * 1000;
-          this.player.on('playing', () => {
-            if (!this.hasCountedView) {
-              // 再生が始まったら10秒後にカウントAPIを叩くタイマーをセット！
-              this.viewTimer = setTimeout(() => {
-                this.videoService.incrementViewCount(this.videoId).subscribe(() => {
-                  console.log('View count incremented for video ID:', this.videoId);
-                  this.hasCountedView = true;
-                });
-              }, countViewTime);
-            }
-          });
-
-          // 一時停止やシーク（飛ばし）を検知したらタイマーを潰す！
-          this.player.on('pause', () => clearTimeout(this.viewTimer));
-          this.player.on('seeking', () => clearTimeout(this.viewTimer));
-
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }
+        this.initPlyr(video);
       });
 
       this.hls.on(Hls.Events.ERROR, (event: Events.ERROR, data: ErrorData) => {
@@ -169,8 +168,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = manifestUrl;
       video.addEventListener('loadedmetadata', () => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.initPlyr(video);
       });
 
       video.addEventListener('error', (e) => {
@@ -191,6 +189,58 @@ export class PlayerComponent implements OnInit, OnDestroy {
     } else {
       console.error('HLS is not supported in this browser');
       alert('このブラウザはHLS再生に対応していません。最新のブラウザを使用してください。');
+    }
+  }
+
+  initPlyr(video: HTMLVideoElement): void {
+    this.player = new Plyr(video, {
+      controls: [
+        'play-large',
+        'play',
+        'progress',
+        'current-time',
+        'mute',
+        'volume',
+        'settings',
+        'fullscreen',
+      ],
+      settings: ['quality', 'speed', 'loop'],
+      keyboard: { focused: true, global: true },
+      tooltips: { controls: true, seek: true },
+      storage: { enabled: true, key: 'playbacq-plyr' },
+      speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 1.75, 2, 3] },
+      previewThumbnails: {
+        enabled: true,
+        src: `/api/videos/${this.videoId}/vtt`,
+      },
+    });
+
+    if (this.player !== null) {
+      const countViewTime = Math.min((this.videoMetadata?.duration ?? 0) / 4, 300) * 1000;
+      this.player.on('ready', () => {
+        const plyrVideoWrapper = video.closest('.plyr__video-wrapper');
+        if (plyrVideoWrapper && this.commentCanvasRef) {
+          plyrVideoWrapper.appendChild(this.commentCanvasRef.nativeElement);
+        }
+      });
+      this.player.on('playing', () => {
+        if (!this.hasCountedView) {
+          // 再生が始まったら10秒後にカウントAPIを叩くタイマーをセット！
+          this.viewTimer = setTimeout(() => {
+            this.videoService.incrementViewCount(this.videoId).subscribe(() => {
+              console.log('View count incremented for video ID:', this.videoId);
+              this.hasCountedView = true;
+            });
+          }, countViewTime);
+        }
+      });
+
+      // 一時停止やシーク（飛ばし）を検知したらタイマーを潰す！
+      this.player.on('pause', () => clearTimeout(this.viewTimer));
+      this.player.on('seeking', () => clearTimeout(this.viewTimer));
+
+      this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -257,6 +307,9 @@ export class PlayerComponent implements OnInit, OnDestroy {
     }
     if (this.commentSubscription) {
       this.commentSubscription.unsubscribe();
+    }
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
     }
     this.commentService.disconnect();
   }

@@ -15,12 +15,13 @@ export interface Video {
 }
 
 export interface Comment {
-  id: number;
-  content: string;
+  comment_id: number;
+  comment: string;
   created_at: string;
   timestamp: number;
   command: string;
-  userId: string;
+  user_id: string;
+  video_id: string;
 }
 
 export interface Progress {

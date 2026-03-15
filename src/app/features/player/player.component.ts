@@ -13,6 +13,7 @@ import Hls, { ErrorData, Events } from 'hls.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
+import { Subscription } from 'rxjs';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
 import { Video } from '../../core/models/video.model';
@@ -42,6 +43,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
   private player: Plyr | null = null;
   private viewTimer: any;
   private hasCountedView = false;
+  private commentSubscription: Subscription | null = null;
 
   isLoading = true;
   videoMetadata: Video | null = null;
@@ -53,6 +55,11 @@ export class PlayerComponent implements OnInit, OnDestroy {
         this.videoMetadata = video;
       });
       this.initPlayer();
+      this.commentService.connect(this.videoId);
+      this.commentSubscription = this.commentService.messages$.subscribe((msg) => {
+        console.log('Received comment via WebSocket:', msg);
+        // TODO: Canvasに描画
+      });
     });
   }
 
@@ -248,5 +255,9 @@ export class PlayerComponent implements OnInit, OnDestroy {
     if (this.hls) {
       this.hls.destroy();
     }
+    if (this.commentSubscription) {
+      this.commentSubscription.unsubscribe();
+    }
+    this.commentService.disconnect();
   }
 }

@@ -1,5 +1,5 @@
 <div class="player-container">
-  <div class="video-wrapper">
+  <div class="video-wrapper" [class.is-loading]="isLoading">
     <video #videoElement crossorigin="anonymous" class="video-element"></video>
 
     <canvas #commentCanvas class="danmaku-canvas"></canvas>
@@ -12,7 +12,7 @@
   <div class="comment-bar">
 
     <button class="command-toggle-btn" (click)="toggleCommandMenu()" title="コマンド設定">
-      ⚙️ </button>
+      🎨</button>
 
     <div class="command-menu" [class.open]="isCommandMenuOpen">
       <div class="color-palette">
@@ -45,8 +45,7 @@
       <input #commandInput type="text" class="command-input cmd-box" placeholder="コマンド (例: ue red small)">
     </div>
 
-    <input #commentInput type="text" class="comment-input" placeholder="コメント..."
-      (keyup.enter)="sendComment()">
+    <input #commentInput type="text" class="comment-input" placeholder="コメント..." (keyup.enter)="sendComment()">
     <button class="comment-send-btn" (click)="sendComment()">送信</button>
   </div>
 

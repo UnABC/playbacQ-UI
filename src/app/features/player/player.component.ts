@@ -290,7 +290,6 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       } else {
         y = 1076;
-        console.log('shita comment, initial y:', y);
         for (let empty_y = 0; y >= 0; y--) {
           empty_y++;
           if (vaild[index][y]) {

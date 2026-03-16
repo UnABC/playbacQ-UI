@@ -65,6 +65,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         comments.map((c) => {
           this.comments.push(new Comment(c.comment, c.timestamp, c.command));
         });
+        this.decideYPosition();
       });
 
       this.startCommentLoop();
@@ -72,6 +73,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       this.commentSubscription = this.commentService.messages$.subscribe((msg) => {
         console.log('Received comment via WebSocket:', msg);
         this.comments.push(new Comment(msg.content, msg.timestamp, msg.command));
+        this.decideYPosition();
       });
     });
   }
@@ -244,6 +246,81 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  decideYPosition(): void {
+    this.comments.sort((a, b) => a.timestamp - b.timestamp);
+    const experimentTime = Array.from({ length: 3 }, () => new Float64Array(1080));
+    const heightOfComment = Array.from({ length: 3 }, () => new Float64Array(1080));
+    const vaild = Array.from({ length: 3 }, () => new Int8Array(1080).fill(0));
+    for (const comment of this.comments) {
+      // 注：上端は4
+      let y = 4;
+      let breakFlag = false;
+      let index = 0;
+      if (comment.position === 'ue') {
+        index = 1;
+      } else if (comment.position === 'shita') {
+        index = 2;
+      }
+      if (comment.position !== 'shita') {
+        for (let empty_y = 0; y < 1050; y++) {
+          empty_y++;
+          if (vaild[index][y]) {
+            // 消費期限切れはリセット
+            if (experimentTime[index][y] < comment.timestamp) {
+              vaild[index][y] = 0;
+            } else {
+              empty_y = 0;
+              y += heightOfComment[index][y] + 1;
+            }
+          }
+          if (empty_y >= comment.height) {
+            comment.y = y - comment.height + 1;
+            breakFlag = true;
+            break;
+          }
+        }
+        if (breakFlag) {
+          for (let fill_y = Math.floor(comment.y); fill_y < comment.y + comment.height; fill_y++) {
+            experimentTime[index][fill_y] = comment.timestamp + comment.appearTime;
+            heightOfComment[index][fill_y] = comment.height - (fill_y - comment.y);
+            vaild[index][fill_y] = 1;
+          }
+        } else {
+          comment.y = Math.random() * (1080 - comment.height - 8) + 4;
+        }
+      } else {
+        y = 1076;
+        console.log('shita comment, initial y:', y);
+        for (let empty_y = 0; y >= 0; y--) {
+          empty_y++;
+          if (vaild[index][y]) {
+            // 消費期限切れはリセット
+            if (experimentTime[index][y] < comment.timestamp) {
+              vaild[index][y] = 0;
+            } else {
+              empty_y = 0;
+              y -= heightOfComment[index][y] + 1;
+            }
+          }
+          if (empty_y >= comment.height) {
+            comment.y = y;
+            breakFlag = true;
+            break;
+          }
+        }
+        if (breakFlag) {
+          for (let fill_y = Math.floor(comment.y); fill_y < comment.y + comment.height; fill_y++) {
+            experimentTime[index][fill_y] = comment.timestamp + comment.appearTime;
+            heightOfComment[index][fill_y] = fill_y - comment.y;
+            vaild[index][fill_y] = 1;
+          }
+        } else {
+          comment.y = Math.random() * (1080 - comment.height - 8) + 4;
+        }
+      }
+    }
+  }
+
   isCommandMenuOpen = false;
   toggleCommandMenu(): void {
     this.isCommandMenuOpen = !this.isCommandMenuOpen;
@@ -293,6 +370,8 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
     const currentTime = this.player?.currentTime ?? 0;
+    this.comments.push(new Comment(commentText, currentTime, commandText));
+    this.decideYPosition();
     this.commentService
       .postComment(this.videoId, commentText, currentTime, commandText)
       .subscribe(() => {

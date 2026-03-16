@@ -1,19 +1,21 @@
 export class Comment {
-  private y: number;
+  private duration: number;
   private font = '';
   private text: string;
   private fillColor: string;
   private strokeColor: string;
   private speed: number;
-  private duration: number;
   private textXsize: number = 0;
-  private position: 'ue' | 'naka' | 'shita' = 'naka';
+  position: 'ue' | 'naka' | 'shita' = 'naka';
+  height: number;
+  y: number;
   timestamp: number;
+  appearTime: number;
 
   constructor(text: string, timestamp: number, command: string) {
     this.timestamp = timestamp;
     this.text = text;
-    this.y = Math.random() * 800;
+    this.y = 4;
     // 参考：3文字=約480px/s
     this.speed = 480;
     this.duration = 4000; // コメントが画面を横切るのにかかる時間（ms）
@@ -99,10 +101,18 @@ export class Comment {
     fontSize *= 2.3;
     this.textXsize = fontSize * text.length;
     this.font = `bold ${fontSize}px ${fontName}`;
-    this.y = this.decideY(this.position);
-    // 文字数に応じて速度を調整
-    this.speed = 372 + text.length * 36;
-    this.duration = (1920 + this.textXsize) / this.speed;
+    this.height = fontSize * commentLineLength;
+    if (this.position === 'naka') {
+      // 文字数に応じて速度を調整
+      this.speed = 372 + text.length * 36;
+      // 2文字分空白を入れる
+      this.appearTime = (this.textXsize + fontSize * 2) / this.speed;
+      this.duration = (1920 + this.textXsize) / this.speed;
+    } else {
+      this.speed = 0;
+      this.appearTime = 3.0;
+      this.duration = 3.0;
+    }
   }
 
   draw(ctx: CanvasRenderingContext2D, currentTime: number): void {
@@ -110,7 +120,8 @@ export class Comment {
       return;
     }
     const elapsed = currentTime - this.timestamp;
-    const currentX = 1920 - this.speed * elapsed;
+    const currentX =
+      this.position === 'naka' ? 1920 - this.speed * elapsed : (1920 - this.textXsize) / 2;
     ctx.font = this.font;
     ctx.fillStyle = this.fillColor;
     ctx.strokeStyle = this.strokeColor;
@@ -119,16 +130,5 @@ export class Comment {
 
     ctx.strokeText(this.text, currentX, this.y);
     ctx.fillText(this.text, currentX, this.y);
-  }
-
-  private decideY(position: 'ue' | 'naka' | 'shita'): number {
-    switch (position) {
-      case 'ue':
-        return Math.random() * 400; // 上半分
-      case 'shita':
-        return 600 + Math.random() * 200;
-      default:
-        return Math.random() * 800;
-    }
   }
 }

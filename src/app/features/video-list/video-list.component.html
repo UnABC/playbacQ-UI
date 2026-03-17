@@ -1,0 +1,28 @@
+<div class="video-list-container">
+	<div class="toolbar">
+		<h2>動画一覧</h2>
+		<div class="actions">
+		</div>
+	</div>
+
+	<div class="video-grid">
+		@for (video of videoList; track video.video_id) {
+		<mat-card class="video-card" [routerLink]="['/watch', video.video_id]">
+			<img mat-card-image class="thumbnail" [src]="video.thumbnail_url" alt="Thumbnail">
+
+			<mat-card-content class="card-content">
+				<div class="video-title" [title]="video.title">{{ video.title }}</div>
+
+				<div class="video-metadata">
+					<span class="views">👀 {{ video.view_count }}回</span>
+					<span class="date">📅 {{ video.created_at | date:'yyyy/MM/dd' }}</span>
+				</div>
+			</mat-card-content>
+		</mat-card>
+		} @empty {
+		<div class="empty-state">
+			<p>動画がまだ投稿されていないみたいね...</p>
+		</div>
+		}
+	</div>
+</div>

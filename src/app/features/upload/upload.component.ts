@@ -12,6 +12,8 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
 import { HttpEventType } from '@angular/common/http';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { switchMap, tap, filter } from 'rxjs/operators';
@@ -27,14 +29,16 @@ import { switchMap, tap, filter } from 'rxjs/operators';
     FormsModule,
     ReactiveFormsModule,
     MatProgressBarModule,
+    MatDialogModule,
+    MatIcon,
   ],
   templateUrl: './upload.component.html',
   styleUrls: ['./upload.component.css'],
 })
 export class UploadComponent {
-  videoService = inject(VideoService);
-  uploadService = inject(UploadService);
-  changeDetector = inject(ChangeDetectorRef);
+  private videoService = inject(VideoService);
+  private uploadService = inject(UploadService);
+  private changeDetector = inject(ChangeDetectorRef);
   isDragging = false;
   isUploadStarted = false;
 
@@ -129,7 +133,7 @@ export class UploadComponent {
                 this.uploadProgress = 0;
                 return this.videoService.pollUploadProgress(videos.video_id).pipe(
                   tap((progress) => {
-                    this.uploadStatusMessage = `エンコード処理中... (${progress.progress}%)`;
+                    this.uploadStatusMessage = `エンコード処理中... (${progress.progress ?? 0}%)`;
                     this.uploadProgress = progress.progress;
                     this.changeDetector.detectChanges();
                     if (progress.status === 2) {

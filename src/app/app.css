@@ -1,0 +1,11 @@
+.app-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto; /* 画面の中央に配置 */
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}

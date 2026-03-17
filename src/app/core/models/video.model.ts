@@ -4,7 +4,7 @@ export interface Video {
   title: string;
   description: string;
   video_url: string;
-  thumbnailUrl: string;
+  thumbnail_url: string;
   uploadUrl: string;
   thumbUploadUrl: string;
   created_at: string;

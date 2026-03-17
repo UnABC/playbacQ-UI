@@ -1,67 +1,75 @@
-<mat-stepper [linear]="true" #stepper>
+<div class="upload-container">
+	<div style="display: flex; justify-content: space-between; align-items: center;">
+		<h2>動画のアップロード</h2>
+		<button mat-icon-button color="warn" class="close-btn" mat-dialog-close title="閉じる">
+			<mat-icon>close</mat-icon>
+		</button>
+	</div>
+	<mat-stepper [linear]="true" #stepper>
 
-	<mat-step label="動画の選択" [completed]="hasFile" [editable]="!isUploadStarted">
-		<div class="step-content">
-			<div class="upload-container">
-				<div class="drop-zone" [class.dragging]="isDragging" (dragover)="onDragOver($event)"
-					(dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
-					@if (!hasFile){
-					<p>ここに動画をドラッグ＆ドロップ</p>
-					<p>または</p>
-					}@else{
-					<p>選択されたファイル: {{ selectedFile?.name }}</p>
-					}
-					<input type="file" #fileInput style="display: none;" accept="video/*,.avi,.mkv,.wmv,.flv,.webm"
-						(change)="onFileSelected($event)">
-					<button matButton="elevated" (click)="fileInput.click()">ファイルを選択</button>
+		<mat-step label="動画の選択" [completed]="hasFile" [editable]="!isUploadStarted">
+			<div class="step-content">
+				<div class="upload-container">
+					<div class="drop-zone" [class.dragging]="isDragging" (dragover)="onDragOver($event)"
+						(dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+						@if (!hasFile){
+						<p>ここに動画をドラッグ＆ドロップ</p>
+						<p>または</p>
+						}@else{
+						<p>選択されたファイル: {{ selectedFile?.name }}</p>
+						}
+						<input type="file" #fileInput style="display: none;" accept="video/*,.avi,.mkv,.wmv,.flv,.webm"
+							(change)="onFileSelected($event)">
+						<button matButton="elevated" (click)="fileInput.click()">ファイルを選択</button>
+					</div>
 				</div>
 			</div>
-		</div>
-	</mat-step>
+		</mat-step>
 
-	<mat-step label="基本情報の入力" [completed]="videoForm.valid && isUploadStarted" [editable]="!isUploadStarted">
+		<mat-step label="基本情報の入力" [completed]="videoForm.valid && isUploadStarted" [editable]="!isUploadStarted">
 
-		<div class="step-content form-container">
-			<form [formGroup]="videoForm">
-				<mat-form-field appearance="outline" class="full-width">
-					<mat-label>動画のタイトル (必須)</mat-label>
-					<input matInput formControlName="title" required>
-				</mat-form-field>
+			<div class="step-content form-container">
+				<form [formGroup]="videoForm">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>動画のタイトル (必須)</mat-label>
+						<input matInput formControlName="title" required>
+					</mat-form-field>
 
-				<mat-form-field appearance="outline" class="full-width">
-					<mat-label>動画の説明</mat-label>
-					<textarea matInput formControlName="description" rows="5" class="no-resize"></textarea>
-				</mat-form-field>
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>動画の説明</mat-label>
+						<textarea matInput formControlName="description" rows="5" class="no-resize"></textarea>
+					</mat-form-field>
 
-				<div class="button-actions">
-					<button mat-stroked-button matStepperPrevious type="button">戻る</button>
+					<div class="button-actions">
+						<button mat-stroked-button matStepperPrevious type="button">戻る</button>
 
-					<button mat-flat-button color="primary" type="button" [disabled]="videoForm.invalid"
-						(click)="startUpload()">
-						アップロード開始
-					</button>
-				</div>
-			</form>
-		</div>
-	</mat-step>
+						<button mat-flat-button color="primary" type="button" [disabled]="videoForm.invalid"
+							(click)="startUpload()">
+							アップロード開始
+						</button>
+					</div>
+				</form>
+			</div>
+		</mat-step>
 
-	<mat-step label="アップロード" [editable]="false">
-		<div class="step-content">
+		<mat-step label="アップロード" [editable]="false">
+			<div class="step-content">
 
-			<h3>{{ uploadStatusMessage }}</h3>
+				<h3>{{ uploadStatusMessage }}</h3>
 
-			<mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+				<mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
 
-			<p style="text-align: right; margin-top: 8px;">{{ uploadProgress }} %</p>
+				<p style="text-align: right; margin-top: 8px;">{{ uploadProgress }} %</p>
 
-		</div>
-	</mat-step>
+			</div>
+		</mat-step>
 
-	<mat-step label="完了" [editable]="false">
-		<div class="step-content">
-			<h3>アップロードが完了しました！</h3>
-			<button mat-button>トップへ戻る</button>
-		</div>
-	</mat-step>
+		<mat-step label="完了" [editable]="false">
+			<div class="step-content">
+				<h3>アップロードが完了しました！</h3>
+				<button mat-button mat-dialog-close>トップへ戻る</button>
+			</div>
+		</mat-step>
 
-</mat-stepper>
+	</mat-stepper>
+</div>

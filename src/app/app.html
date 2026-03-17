@@ -1,3 +1,9 @@
 <!-- TODO: 後で表示/非表示を切り替えられるようにする! -->
-<app-upload />
- <router-outlet></router-outlet>
+<div class="app-container">
+	<div class="toolbar">
+		<button mat-flat-button color="primary" (click)="openUploadDialog()">
+			<mat-icon>upload</mat-icon> 動画を投稿
+		</button>
+	</div>
+	<router-outlet></router-outlet>
+</div>

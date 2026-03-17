@@ -1,6 +1,4 @@
 .upload-container {
-  max-width: 600px;
-  margin: 50px auto; /* 上下に余白、左右は自動で中央寄せ */
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }

@@ -4,5 +4,6 @@ import { VideoListComponent } from './features/video-list/video-list.component';
 
 export const routes: Routes = [
   { path: 'watch/:id', component: PlayerComponent },
-  { path: '**', component: VideoListComponent },
+  { path: 'videos', component: VideoListComponent },
+  { path: '**', redirectTo: 'videos' },
 ];

@@ -1,39 +1,51 @@
 .player-container {
-  max-width: 1000px; /* 大画面でも広がりすぎないように制限 */
-  margin: 0 auto;    /* 画面の中央に配置 */
-  padding: 16px;     /* スマホ画面の端っこにピッタリくっつかないように余白を */
+  max-width: 1000px;
+  /* 大画面でも広がりすぎないように制限 */
+  margin: 0 auto;
+  /* 画面の中央に配置 */
+  padding: 16px;
+  /* スマホ画面の端っこにピッタリくっつかないように余白を */
 }
 
 .video-wrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9; /* 魔法のプロパティ！ これだけで16:9を維持！ */
-  background-color: #000; /* 動画が読み込まれるまでは黒背景 */
-  border-radius: 8px; /* 角を少し丸めるとモダンになります！ */
+  aspect-ratio: 16 / 9;
+  /* 魔法のプロパティ！ これだけで16:9を維持！ */
+  background-color: #000;
+  /* 動画が読み込まれるまでは黒背景 */
+  border-radius: 8px;
+  /* 角を少し丸めるとモダンになります！ */
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* プレイヤーに少し影をつけて浮かせる */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* プレイヤーに少し影をつけて浮かせる */
 }
 
 .video-element {
   width: 100%;
   height: 100%;
-  outline: none; /* クリックした時の青い枠線を消す */
+  outline: none;
+  /* クリックした時の青い枠線を消す */
 }
 
 .spinner-overlay {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.6); /* 半透明の黒で暗くする */
+  background-color: rgba(0, 0, 0, 0.6);
+  /* 半透明の黒で暗くする */
   z-index: 10;
 }
 
 .metadata-card {
   margin-top: 24px;
   border-radius: 8px;
-  
+
   .video-title {
     font-size: 1.5rem;
     font-weight: bold;
@@ -51,7 +63,8 @@
   }
 
   .description {
-    white-space: pre-wrap; /* 投稿者が入力した改行をそのまま反映する */
+    white-space: pre-wrap;
+    /* 投稿者が入力した改行をそのまま反映する */
     font-size: 1rem;
     line-height: 1.6;
     color: #333;
@@ -65,16 +78,36 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  pointer-events: none; /*  クリックをすり抜けさせて下のPlyrを操作可能にする */
-  z-index: 2; /* spinnerより下、videoより上に配置 */
-  opacity: 0.9; /* コメントを少し透けさせて動画が見えるようにする */
+  pointer-events: none;
+  /*  クリックをすり抜けさせて下のPlyrを操作可能にする */
+  z-index: 2;
+  /* spinnerより下、videoより上に配置 */
+  opacity: 0.9;
+  /* コメントを少し透けさせて動画が見えるようにする */
 }
 
 .video-wrapper.is-loading ::ng-deep .plyr {
   opacity: 0;
 }
+
 ::ng-deep .plyr {
-  transition: opacity 0.3s ease; /* ふわっと表示させる */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.3s ease;
+  /* ふわっと表示させる */
+}
+
+::ng-deep .plyr__video-wrapper {
+  height: 100%;
+}
+
+::ng-deep .plyr__video-wrapper video {
+  height: 100%;
+  object-fit: contain;
+  /* アスペクト比を維持して黒帯を入れる */
 }
 
 /* コメント入力バーのスタイル */
@@ -87,7 +120,8 @@
   padding: 8px 16px;
   margin-top: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  gap: 12px; /* 要素の隙間 */
+  gap: 12px;
+  /* 要素の隙間 */
 }
 
 .comment-options {
@@ -106,17 +140,20 @@
 }
 
 .comment-input {
-  flex-grow: 1; /* 余ったスペースを全部入力欄にする */
+  flex-grow: 1;
+  /* 余ったスペースを全部入力欄にする */
   padding: 8px 12px;
   border: 1px solid #ccc;
-  border-radius: 20px; /* 丸みを持たせてモダンに */
+  border-radius: 20px;
+  /* 丸みを持たせてモダンに */
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .comment-input:focus {
-  border-color: #3f51b5; /* Angular Materialのプライマリカラーに合わせる */
+  border-color: #3f51b5;
+  /* Angular Materialのプライマリカラーに合わせる */
 }
 
 .comment-send-btn {
@@ -138,27 +175,31 @@
   display: flex;
   gap: 6px;
   padding-right: 8px;
-  border-right: 1px solid #ddd; /* コマンド入力欄との区切り線 */
+  border-right: 1px solid #ddd;
+  /* コマンド入力欄との区切り線 */
 }
 
 .color-swatch {
   width: 18px;
   height: 18px;
-  border-radius: 50%; /* まん丸にする */
+  border-radius: 50%;
+  /* まん丸にする */
   border: 1px solid #ccc;
   cursor: pointer;
   transition: transform 0.1s;
 }
 
 .color-swatch:hover {
-  transform: scale(1.2); /* マウスを乗せたら少し大きくする */
-  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  transform: scale(1.2);
+  /* マウスを乗せたら少し大きくする */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
 .cmd-box {
   flex-grow: 0;
   width: 200px;
-  font-family: monospace; /* コマンドっぽく等幅フォントに */
+  font-family: monospace;
+  /* コマンドっぽく等幅フォントに */
 }
 
 .command-toggle-btn {
@@ -179,7 +220,8 @@
 }
 
 /* ボタンが押された時（メニュー展開時）に、歯車アイコンを少し回す遊び心 */
-.command-menu.open ~ .command-toggle-btn, /* 構造的に隣接していない場合は不要かもですが、雰囲気に合わせて */
+.command-menu.open~.command-toggle-btn,
+/* 構造的に隣接していない場合は不要かもですが、雰囲気に合わせて */
 .command-toggle-btn:active {
   transform: rotate(90deg);
 }
@@ -189,12 +231,14 @@
   align-items: center;
   max-width: 0;
   opacity: 0;
-  overflow: visible; /* ★パレットがはみ出すので visible に変更 */
+  overflow: visible;
+  /* ★パレットがはみ出すので visible に変更 */
   transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in;
 }
 
 .command-menu.open {
-  max-width: 250px; /* 入力欄が収まる幅 */
+  max-width: 250px;
+  /* 入力欄が収まる幅 */
   opacity: 1;
   margin-right: 8px;
 }
@@ -202,19 +246,22 @@
 /* ★ パレットだけを上にポップアップさせる */
 .color-palette {
   position: absolute;
-  bottom: 100%;       /* コメントバーの上に出現 */
-  left: 40px;         /* 歯車アイコンの少し右あたり */
+  bottom: 100%;
+  /* コメントバーの上に出現 */
+  left: 40px;
+  /* 歯車アイコンの少し右あたり */
   margin-bottom: 12px;
   background: white;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 8px;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-  
+
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5列×2行などで綺麗に並べる */
+  grid-template-columns: repeat(5, 1fr);
+  /* 5列×2行などで綺麗に並べる */
   gap: 8px;
-  
+
   /* 初期状態は隠す */
   opacity: 0;
   visibility: hidden;

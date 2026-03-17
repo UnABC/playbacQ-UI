@@ -5,21 +5,29 @@
 
 /* ドロップゾーンの基本スタイル */
 .drop-zone {
-  border: 2px dashed #90caf9; /* 水色の点線で「ここに入れられそう」感を出す */
-  border-radius: 12px; /* 今どきの角丸 */
+  border: 2px dashed #90caf9;
+  /* 水色の点線で「ここに入れられそう」感を出す */
+  border-radius: 12px;
+  /* 今どきの角丸 */
   padding: 60px 20px;
   text-align: center;
-  background-color: #f8fcfd; /* ほんのり青みがかった白 */
+  background-color: #f8fcfd;
+  /* ほんのり青みがかった白 */
   color: #555;
-  transition: all 0.3s ease; /* 状態が変わる時に0.3秒かけてフワッと変化させる */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* うっすらとした影で立体感を */
+  transition: all 0.3s ease;
+  /* 状態が変わる時に0.3秒かけてフワッと変化させる */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  /* うっすらとした影で立体感を */
 }
 
 /* ファイルをドラッグして重ねている時のスタイル (.dragging クラスが付与された時) */
 .drop-zone.dragging {
-  background-color: #e3f2fd; /* 背景色を少し濃くする */
-  border-color: #2196f3; /* 枠線も濃くして強調 */
-  transform: scale(1.02); /* 少しだけ手前に浮き上がる演出（UX向上） */
+  background-color: #e3f2fd;
+  /* 背景色を少し濃くする */
+  border-color: #2196f3;
+  /* 枠線も濃くして強調 */
+  transform: scale(1.02);
+  /* 少しだけ手前に浮き上がる演出（UX向上） */
 }
 
 /* 中のテキスト */
@@ -37,7 +45,8 @@ button:active {
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* 入力欄同士の隙間をいい感じに空ける */
+  gap: 16px;
+  /* 入力欄同士の隙間をいい感じに空ける */
   padding: 20px 0;
 }
 
@@ -57,4 +66,9 @@ button:active {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
+}
+
+.upload-icon {
+  zoom: 4;
+  margin-top: 4px;
 }

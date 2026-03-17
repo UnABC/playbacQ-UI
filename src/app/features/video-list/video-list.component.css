@@ -2,12 +2,14 @@
 .video-list-container {
   padding: 24px;
   max-width: 1200px;
-  margin: 0 auto; /* 画面の中央に配置 */
+  margin: 0 auto;
+  /* 画面の中央に配置 */
 }
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: start;
+  gap: 16px;
   align-items: center;
   margin-bottom: 24px;
 }
@@ -45,8 +47,10 @@
 .thumbnail {
   width: 100%;
   aspect-ratio: 16 / 9;
-  object-fit: cover; /* 枠に収まるように切り抜く */
-  margin: 0 !important; /* mat-card-imageのデフォルトマージンをリセット */
+  object-fit: cover;
+  /* 枠に収まるように切り抜く */
+  margin: 0 !important;
+  /* mat-card-imageのデフォルトマージンをリセット */
 }
 
 .card-content {
@@ -63,7 +67,7 @@
   line-height: 1.4;
   margin-bottom: 12px;
   color: #111;
-  
+
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -80,9 +84,51 @@
 }
 
 .empty-state {
-  grid-column: 1 / -1; /* グリッド全体を使って中央表示 */
+  grid-column: 1 / -1;
+  /* グリッド全体を使って中央表示 */
   text-align: center;
   padding: 40px;
   color: #888;
   font-size: 1.2rem;
+}
+
+.title-and-sort {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  /* H2とセレクトボックスの隙間 */
+}
+
+.title-and-sort h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.sort-select {
+  width: 180px;
+}
+
+.thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.duration-badge {
+  position: absolute;
+  bottom: 8px;
+  /* 下から8pxの位置 */
+  right: 8px;
+  /* 右から8pxの位置 */
+  background-color: rgba(0, 0, 0, 0.8);
+  /* 黒の半透明 */
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  pointer-events: none;
+  /* マウスイベントを邪魔しないようにする */
 }

@@ -21,6 +21,11 @@
 						<input type="file" #fileInput style="display: none;" accept="video/*,.avi,.mkv,.wmv,.flv,.webm"
 							(change)="onFileSelected($event)">
 						<button matButton="elevated" (click)="fileInput.click()">ファイルを選択</button>
+						<div class="upload-icon">
+							<span class="material-icons">
+								upload_file
+							</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -55,7 +60,7 @@
 		<mat-step label="アップロード" [editable]="false">
 			<div class="step-content">
 
-				<h3>{{ uploadStatusMessage }}</h3>
+				<h3 style="white-space: pre-wrap;">{{ uploadStatusMessage }}</h3>
 
 				<mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
 

@@ -1,6 +1,20 @@
 <div class="video-list-container">
 	<div class="toolbar">
 		<h2>動画一覧</h2>
+		<mat-form-field appearance="outline" subscriptSizing="dynamic" class="sort-select">
+			<mat-select [value]="currentSort" (selectionChange)="onSortChange($event.value)">
+				<mat-option value="created_at">投稿日時</mat-option>
+				<mat-option value="title">タイトル</mat-option>
+				<mat-option value="view_count">再生回数</mat-option>
+				<mat-option value="duration">再生時間</mat-option>
+			</mat-select>
+		</mat-form-field>
+		<mat-form-field appearance="outline" subscriptSizing="dynamic" class="sort-select">
+			<mat-select [value]="currentOrder" (selectionChange)="onOrderChange($event.value)">
+				<mat-option [value]="1">昇順</mat-option>
+				<mat-option [value]="0">降順</mat-option>
+			</mat-select>
+		</mat-form-field>
 		<div class="actions">
 		</div>
 	</div>
@@ -8,14 +22,26 @@
 	<div class="video-grid">
 		@for (video of videoList; track video.video_id) {
 		<mat-card class="video-card" [routerLink]="['/watch', video.video_id]">
-			<img mat-card-image class="thumbnail" [src]="video.thumbnail_url" alt="Thumbnail">
+			<div class="thumbnail-wrapper">
+				<img mat-card-image class="thumbnail" [src]="video.thumbnail_url" alt="Thumbnail">
 
+				<span class="duration-badge">{{ formatDuration(video.duration) }}</span>
+			</div>
 			<mat-card-content class="card-content">
 				<div class="video-title" [title]="video.title">{{ video.title }}</div>
 
 				<div class="video-metadata">
-					<span class="views">👀 {{ video.view_count }}回</span>
-					<span class="date">📅 {{ video.created_at | date:'yyyy/MM/dd' }}</span>
+					<span class="views" style="display: flex; align-items: center; gap: 4px;">
+						<span class="material-icons">
+							visibility
+						</span>
+						{{ video.view_count }}回
+					</span>
+					<span class="date" style="display: flex; align-items: center; gap: 4px;">
+						<span class="material-icons">
+							upload
+						</span> {{ video.created_at | date:'yyyy/MM/dd' }}
+					</span>
 				</div>
 			</mat-card-content>
 		</mat-card>

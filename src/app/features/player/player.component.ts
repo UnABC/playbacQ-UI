@@ -224,6 +224,9 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         if (plyrVideoWrapper && this.commentCanvasRef) {
           plyrVideoWrapper.appendChild(this.commentCanvasRef.nativeElement);
         }
+
+        this.isLoading = false;
+        this.cdr.detectChanges();
       });
       this.player.on('playing', () => {
         if (!this.hasCountedView) {
@@ -240,9 +243,6 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       // 一時停止やシーク（飛ばし）を検知したらタイマーを潰す！
       this.player.on('pause', () => clearTimeout(this.viewTimer));
       this.player.on('seeking', () => clearTimeout(this.viewTimer));
-
-      this.isLoading = false;
-      this.cdr.detectChanges();
     }
   }
 

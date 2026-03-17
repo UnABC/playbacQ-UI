@@ -133,7 +133,7 @@ export class UploadComponent {
                 this.uploadProgress = 0;
                 return this.videoService.pollUploadProgress(videos.video_id).pipe(
                   tap((progress) => {
-                    this.uploadStatusMessage = `エンコード処理中... (${progress.progress ?? 0}%)`;
+                    this.uploadStatusMessage = `エンコード処理中... (${progress.progress ?? 0}%)\n処理には時間がかかることがあります。(画面を閉じても大丈夫ですがエンコードの進捗が見れなくなりますよ？)`;
                     this.uploadProgress = progress.progress;
                     this.changeDetector.detectChanges();
                     if (progress.status === 2) {

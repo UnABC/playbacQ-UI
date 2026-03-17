@@ -1,11 +1,32 @@
 .app-container {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto; /* 画面の中央に配置 */
+	padding: 24px;
+	max-width: 1200px;
+	margin: 0 auto;
+	/* 画面の中央に配置 */
 }
+
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 24px;
+}
+
+.search-bar {
+	display: flex;
+	align-items: center;
+	background-color: #f1f3f4;
+	padding: 4px 16px;
+	border-radius: 24px;
+	width: 100%;
+	max-width: 400px;
+	/* 長くなりすぎないように */
+}
+
+.search-bar input {
+	border: none;
+	background: transparent;
+	outline: none;
+	flex-grow: 1;
+	font-size: 1rem;
 }

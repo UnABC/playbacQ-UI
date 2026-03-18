@@ -11,11 +11,9 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  /* 魔法のプロパティ！ これだけで16:9を維持！ */
   background-color: #000;
   /* 動画が読み込まれるまでは黒背景 */
   border-radius: 8px;
-  /* 角を少し丸めるとモダンになります！ */
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   /* プレイヤーに少し影をつけて浮かせる */
@@ -79,11 +77,8 @@
   height: 100%;
   object-fit: contain;
   pointer-events: none;
-  /*  クリックをすり抜けさせて下のPlyrを操作可能にする */
   z-index: 2;
-  /* spinnerより下、videoより上に配置 */
   opacity: 0.9;
-  /* コメントを少し透けさせて動画が見えるようにする */
 }
 
 .video-wrapper.is-loading ::ng-deep .plyr {
@@ -97,7 +92,6 @@
   width: 100%;
   height: 100%;
   transition: opacity 0.3s ease;
-  /* ふわっと表示させる */
 }
 
 ::ng-deep .plyr__video-wrapper {
@@ -145,7 +139,6 @@
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 20px;
-  /* 丸みを持たせてモダンに */
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s;
@@ -183,7 +176,6 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  /* まん丸にする */
   border: 1px solid #ccc;
   cursor: pointer;
   transition: transform 0.1s;
@@ -243,7 +235,6 @@
   margin-right: 8px;
 }
 
-/* ★ パレットだけを上にポップアップさせる */
 .color-palette {
   position: absolute;
   bottom: 100%;
@@ -323,4 +314,35 @@
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   /* うっすら境界線 */
   border-left: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.hoverable-tag .remove-icon {
+  font-size: 16px;
+  height: 16px;
+  line-height: 16px;
+  vertical-align: middle;
+
+  max-width: 0;
+  margin-left: 0;
+  overflow: hidden;
+
+  opacity: 0;
+  pointer-events: none;
+  /* アニメーションの対象に max-width と margin-left を追加 */
+  transition: max-width 0.2s ease, margin-left 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+  color: #999;
+}
+
+/* ホバーされた時に本来のサイズに戻す */
+.hoverable-tag:hover .remove-icon {
+  max-width: 16px;
+  /* アイコンの実際の幅 */
+  margin-left: 4px;
+  /* 文字との隙間を復活させる */
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hoverable-tag .remove-icon:hover {
+  color: #d32f2f;
 }

@@ -80,15 +80,20 @@
           <mat-icon> sell </mat-icon>
           <mat-chip-set>
             @for (tag of tags; track tag.tag_id) {
-            <mat-chip [routerLink]="['/']" [queryParams]="{ tag: tag.name }" style="cursor: pointer;">
+            <mat-chip class="hoverable-tag" [routerLink]="['/']" [queryParams]="{ tag: tag.name }"
+              style="display: flex;cursor: pointer;align-items: center;">
               <span *ngIf="tag.status === 1" class="material-icons"
                 style="font-size: 14px; vertical-align: middle;">lock</span>
               {{ tag.name }}
+              <mat-icon *ngIf="tag.status !== 1" class="remove-icon"
+                (click)="$event.preventDefault(); $event.stopPropagation(); removeTag(tag)">
+                clear
+              </mat-icon>
             </mat-chip>
             }
           </mat-chip-set>
 
-          <div class="tag-action-wrapper" style="position: relative; display: inline-flex;">
+          <div class="tag-action-wrapper" #tagActionWrapper style="position: relative; display: inline-flex;">
             <button mat-icon-button class="add-tag-btn" (click)="openTagInput()" title="タグを追加">
               <mat-icon>add_circle_outline</mat-icon>タグを追加
             </button>

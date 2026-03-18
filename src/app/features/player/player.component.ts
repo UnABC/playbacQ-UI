@@ -7,6 +7,7 @@ import {
   OnDestroy,
   ChangeDetectorRef,
   AfterViewInit,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -56,6 +57,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('commentInput') commentInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('commandInput') commandInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('commentCanvas') commentCanvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('tagActionWrapper') tagActionWrapperRef!: ElementRef<HTMLDivElement>;
 
   private route = inject(ActivatedRoute);
   private videoService = inject(VideoService);
@@ -78,6 +80,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   tags: Tag[] = [];
   suggestTags: Tag[] = [];
   isTagInputOpen = false;
+  isCommentVisible = true;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -264,9 +267,41 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.player !== null) {
       const countViewTime = Math.min((this.videoMetadata?.duration ?? 0) / 4, 300) * 1000;
       this.player.on('ready', () => {
+        const plyrContainer = video.closest('.plyr');
         const plyrVideoWrapper = video.closest('.plyr__video-wrapper');
         if (plyrVideoWrapper && this.commentCanvasRef) {
           plyrVideoWrapper.appendChild(this.commentCanvasRef.nativeElement);
+        }
+
+        const controls = plyrContainer?.querySelector('.plyr__controls');
+        const settingBtn = controls?.querySelector('[data-plyr="settings"]');
+
+        if (controls && settingBtn) {
+          const toggleBtn = document.createElement('button');
+          toggleBtn.type = 'button';
+          toggleBtn.className = 'plyr__control';
+          toggleBtn.title = 'コメントの表示/非表示';
+          toggleBtn.style.display = 'flex';
+          toggleBtn.style.alignItems = 'center';
+          toggleBtn.style.justifyContent = 'center';
+
+          // 初期アイコン（chat）を設定
+          toggleBtn.innerHTML = '<span class="material-icons" style="font-size: 18px;">chat</span>';
+
+          // ボタンがクリックされた時の処理
+          toggleBtn.addEventListener('click', () => {
+            this.isCommentVisible = !this.isCommentVisible;
+            if (this.commentCanvasRef) {
+              // 元のopacityが0.9だから、表示時は0.9に戻す
+              this.commentCanvasRef.nativeElement.style.opacity = this.isCommentVisible
+                ? '0.9'
+                : '0';
+            }
+            toggleBtn.innerHTML = this.isCommentVisible
+              ? '<span class="material-icons" style="font-size: 18px;">chat</span>'
+              : '<span class="material-icons" style="font-size: 18px;">speaker_notes_off</span>';
+          });
+          settingBtn.parentNode?.insertBefore(toggleBtn, settingBtn.nextSibling);
         }
 
         this.isLoading = false;
@@ -428,16 +463,30 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     const currentTime = this.player?.currentTime ?? 0;
     this.comments.push(new Comment(commentText, currentTime, commandText));
     this.decideYPosition();
-    this.commentService
-      .postComment(this.videoId, commentText, currentTime, commandText)
-      .subscribe(() => {
+    this.commentService.postComment(this.videoId, commentText, currentTime, commandText).subscribe({
+      next: () => {
         console.log('Comment:', commentText, 'at', currentTime, 'with commands:', commandText);
-      });
+      },
+      error: (err: any) => {
+        console.error('Failed to post comment:', err);
+        alert('コメントの投稿に失敗しました。');
+      },
+    });
     this.commentInputRef.nativeElement.value = '';
   }
 
   commentSize(): number {
     return this.comments.length;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.isTagInputOpen && this.tagActionWrapperRef) {
+      const clickedInside = this.tagActionWrapperRef.nativeElement.contains(event.target as Node);
+      if (!clickedInside) {
+        this.isTagInputOpen = false;
+      }
+    }
   }
 
   openTagInput(): void {
@@ -460,11 +509,34 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!confirm('タグ ' + tagName + ' を追加しますか？')) {
       return;
     }
-    this.videoService.addVideoTag(this.videoMetadata.video_id, tagName.trim()).subscribe(() => {
-      this.updateTags();
+    this.videoService.addVideoTag(this.videoMetadata.video_id, tagName.trim()).subscribe({
+      next: () => {
+        this.updateTags();
+        console.log('Added tag:', tagName);
+      },
+      error: (err: any) => {
+        console.error('Failed to add tag:', err);
+        alert('タグの追加に失敗しました。');
+      },
     });
     this.isTagInputOpen = false;
-    console.log('Added tag:', tagName);
+  }
+
+  removeTag(tag: Tag): void {
+    if (!this.videoMetadata) return;
+    if (!confirm('タグ ' + tag.name + ' を削除しますか？')) {
+      return;
+    }
+    this.videoService.removeVideoTag(this.videoMetadata.video_id, tag).subscribe({
+      next: () => {
+        this.updateTags();
+        console.log('Removed tag:', tag.name);
+      },
+      error: (err: any) => {
+        console.error('Failed to remove tag:', err);
+        alert('タグの削除に失敗しました。');
+      },
+    });
   }
 
   ngOnDestroy(): void {

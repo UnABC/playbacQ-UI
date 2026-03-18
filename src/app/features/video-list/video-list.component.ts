@@ -23,10 +23,10 @@ import { Video } from '../../core/models/video.model';
   styleUrls: ['./video-list.component.css'],
 })
 export class VideoListComponent implements OnInit {
-  videoService = inject(VideoService);
+  private videoService = inject(VideoService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  cdr = inject(ChangeDetectorRef);
+  private cdr = inject(ChangeDetectorRef);
 
   videoList: Video[] = [];
   currentSort = 'created_at';

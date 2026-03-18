@@ -211,11 +211,10 @@
   background-color: #e0e0e0;
 }
 
-/* ボタンが押された時（メニュー展開時）に、歯車アイコンを少し回す遊び心 */
+/* コマンドメニューの開閉時のアニメーション */
 .command-menu.open~.command-toggle-btn,
-/* 構造的に隣接していない場合は不要かもですが、雰囲気に合わせて */
 .command-toggle-btn:active {
-  transform: rotate(90deg);
+  transform: scale(0.8);
 }
 
 .command-menu {
@@ -339,10 +338,12 @@
   /* アイコンの実際の幅 */
   margin-left: 4px;
   /* 文字との隙間を復活させる */
+  border-radius: 50%;
   opacity: 1;
   pointer-events: auto;
 }
 
 .hoverable-tag .remove-icon:hover {
   color: #d32f2f;
+  background-color: #e0e0e0;
 }

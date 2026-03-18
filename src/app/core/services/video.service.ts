@@ -43,7 +43,7 @@ export class VideoService {
   }
 
   removeVideoTag(videoId: string, tag: Tag): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${videoId}/tags`, { body: { tag: tag.name } });
+    return this.http.delete(`${this.apiUrl}/${videoId}/tags`, { body: { tag_id: tag.tag_id } });
   }
 
   pollUploadProgress(videoId: string, intervalMs: number = 500): Observable<any> {

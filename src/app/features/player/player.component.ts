@@ -10,7 +10,7 @@ import {
   HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import Hls, { ErrorData, Events } from 'hls.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
@@ -60,6 +60,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('tagActionWrapper') tagActionWrapperRef!: ElementRef<HTMLDivElement>;
 
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private videoService = inject(VideoService);
   private commentService = inject(CommentService);
   private tagService = inject(TagService);
@@ -192,8 +193,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
             return;
           } else if (data.response && data.response.code === 404) {
             console.warn('The video file was not found on the server. It may have been deleted.');
-            // TODO: 404ページにリダイレクトするなどの対応を検討
-            //alert('動画が見つかりませんでした。動画は削除された可能性があります。');
+            this.router.navigate(['/404']);
             return;
           }
 

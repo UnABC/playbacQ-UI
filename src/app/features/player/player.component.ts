@@ -9,15 +9,23 @@ import {
   AfterViewInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import Hls, { ErrorData, Events } from 'hls.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { Subscription } from 'rxjs';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIcon } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { Subscription, Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
+import { TagService } from '../../core/services/tag.service';
 import { Video } from '../../core/models/video.model';
+import { Tag } from '../../core/models/tag.model';
 import { Comment } from './comment';
 import { LinkifyPipe } from '../../shared/pipes/linkify-pipe';
 import * as Plyr_ from 'plyr';
@@ -27,7 +35,19 @@ type Plyr = PlyrType;
 
 @Component({
   selector: 'app-video-player',
-  imports: [CommonModule, MatProgressSpinnerModule, MatCardModule, MatDividerModule, LinkifyPipe],
+  imports: [
+    CommonModule,
+    MatProgressSpinnerModule,
+    MatCardModule,
+    MatDividerModule,
+    MatChipsModule,
+    MatIcon,
+    MatAutocompleteModule,
+    MatInputModule,
+    MatFormFieldModule,
+    LinkifyPipe,
+    RouterLink,
+  ],
   templateUrl: './player.component.html',
   styleUrls: ['./player.component.css'],
 })
@@ -40,6 +60,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private route = inject(ActivatedRoute);
   private videoService = inject(VideoService);
   private commentService = inject(CommentService);
+  private tagService = inject(TagService);
   private cdr = inject(ChangeDetectorRef);
   private hls: Hls | null = null;
   private videoId: string = '';
@@ -50,9 +71,13 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private ctx!: CanvasRenderingContext2D;
   private animationFrameId: number = 0;
   private comments: Comment[] = [];
+  private tagSearchSubject = new Subject<string>();
 
   isLoading = true;
   videoMetadata: Video | null = null;
+  tags: Tag[] = [];
+  suggestTags: Tag[] = [];
+  isTagInputOpen = false;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -75,6 +100,25 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         this.comments.push(new Comment(msg.content, msg.timestamp, msg.command));
         this.decideYPosition();
       });
+      // タグのサジェスト機能
+      this.tagSearchSubject
+        .pipe(
+          debounceTime(300), // 入力がピタッと止まってから300ミリ秒待つ（タイピング中の連打防止！）
+          distinctUntilChanged(), // 前回の検索キーワードと全く同じなら無視する
+          switchMap((keyword) => {
+            // キーワードが空っぽならAPIを叩かずに空の配列を返す
+            if (!keyword.trim()) {
+              return of([]);
+            }
+            return this.tagService.getTag(keyword).pipe(
+              catchError(() => of([])), // エラーが起きてもストリームが死なないように保護する
+            );
+          }),
+        )
+        .subscribe((tags) => {
+          this.suggestTags = tags;
+          this.cdr.detectChanges();
+        });
     });
   }
 
@@ -226,6 +270,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         }
 
         this.isLoading = false;
+        this.updateTags();
         this.cdr.detectChanges();
       });
       this.player.on('playing', () => {
@@ -320,6 +365,14 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  updateTags(): void {
+    if (!this.videoMetadata) return;
+    this.videoService.getVideoTags(this.videoMetadata.video_id).subscribe((tags) => {
+      this.tags = tags;
+      this.cdr.detectChanges();
+    });
+  }
+
   isCommandMenuOpen = false;
   toggleCommandMenu(): void {
     this.isCommandMenuOpen = !this.isCommandMenuOpen;
@@ -368,6 +421,10 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!commentText) {
       return;
     }
+    if (commentText.length > 140 || commandText.length > 128) {
+      alert('あり得ないことが起きています。HTMLを改竄していませんか？');
+      return;
+    }
     const currentTime = this.player?.currentTime ?? 0;
     this.comments.push(new Comment(commentText, currentTime, commandText));
     this.decideYPosition();
@@ -377,6 +434,37 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         console.log('Comment:', commentText, 'at', currentTime, 'with commands:', commandText);
       });
     this.commentInputRef.nativeElement.value = '';
+  }
+
+  commentSize(): number {
+    return this.comments.length;
+  }
+
+  openTagInput(): void {
+    this.isTagInputOpen = !this.isTagInputOpen;
+  }
+
+  onTagInput(event: Event): void {
+    const inputKeyword = (event.target as HTMLInputElement).value;
+    this.tagSearchSubject.next(inputKeyword);
+  }
+
+  addTag(tagName: string): void {
+    if (!tagName.trim() || !this.videoMetadata) {
+      return;
+    }
+    if (tagName.length > 40) {
+      alert('あり得ないことが起きています。HTMLを改竄していませんか？');
+      return;
+    }
+    if (!confirm('タグ ' + tagName + ' を追加しますか？')) {
+      return;
+    }
+    this.videoService.addVideoTag(this.videoMetadata.video_id, tagName.trim()).subscribe(() => {
+      this.updateTags();
+    });
+    this.isTagInputOpen = false;
+    console.log('Added tag:', tagName);
   }
 
   ngOnDestroy(): void {

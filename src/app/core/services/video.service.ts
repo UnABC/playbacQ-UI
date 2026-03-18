@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Video, Progress } from '../models/video.model';
+import { Tag } from '../models/tag.model';
 import { interval } from 'rxjs';
 import { switchMap, takeWhile } from 'rxjs/operators';
 
@@ -31,6 +32,14 @@ export class VideoService {
 
   createVideo(title: string, description: string): Observable<Video> {
     return this.http.post<Video>(this.apiUrl, { title, description });
+  }
+
+  getVideoTags(id: string): Observable<Tag[]> {
+    return this.http.get<Tag[]>(`${this.apiUrl}/${id}/tags`);
+  }
+
+  addVideoTag(videoId: string, tagName: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${videoId}/tags`, { tag: tagName });
   }
 
   pollUploadProgress(videoId: string, intervalMs: number = 500): Observable<any> {

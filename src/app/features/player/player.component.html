@@ -12,7 +12,10 @@
   <div class="comment-bar">
 
     <button class="command-toggle-btn" (click)="toggleCommandMenu()" title="コマンド設定">
-      🎨</button>
+      <mat-icon>
+        palette
+      </mat-icon>
+    </button>
 
     <div class="command-menu" [class.open]="isCommandMenuOpen">
       <div class="color-palette">
@@ -42,18 +45,68 @@
         </div>
       </div>
 
-      <input #commandInput type="text" class="command-input cmd-box" placeholder="コマンド (例: ue red small)">
+      <input #commandInput type="text" class="command-input cmd-box" placeholder="コマンド (例: ue red small)"
+        maxlength="128">
     </div>
 
-    <input #commentInput type="text" class="comment-input" placeholder="コメント..." (keyup.enter)="sendComment()">
+    <input #commentInput type="text" class="comment-input" placeholder="コメント..." (keyup.enter)="sendComment()"
+      maxlength="140">
     <button class="comment-send-btn" (click)="sendComment()">送信</button>
   </div>
 
   <mat-card *ngIf="videoMetadata" class="metadata-card">
     <mat-card-header>
       <mat-card-title class="video-title">{{ videoMetadata.title }}</mat-card-title>
-      <mat-card-subtitle class="video-stats">
-        再生回数: {{ videoMetadata.view_count }}回 • {{ videoMetadata.created_at | date:'yyyy/MM/dd HH:mm' }}
+      <mat-card-subtitle class="video-stats"
+        style="display: flex; gap: 16px; font-size: 14px; color: #666; align-items: center;">
+        <div>
+          {{ videoMetadata.created_at | date:'yyyy/MM/dd HH:mm' }}
+        </div>
+        <div style="display: flex; align-items: center;">
+          <mat-icon>
+            play_arrow
+          </mat-icon> {{ videoMetadata.view_count }}
+        </div>
+        <div style="display: flex; align-items: center;gap: 2px;">
+          <mat-icon>
+            comment
+          </mat-icon> {{ commentSize() }}
+        </div>
+      </mat-card-subtitle>
+
+      <mat-card-subtitle style="display: flex; flex-direction: column; gap: 8px;margin-top: 8px;">
+        <div class="video-tags"
+          style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <mat-icon> sell </mat-icon>
+          <mat-chip-set>
+            @for (tag of tags; track tag.tag_id) {
+            <mat-chip [routerLink]="['/']" [queryParams]="{ tag: tag.name }" style="cursor: pointer;">
+              <span *ngIf="tag.status === 1" class="material-icons"
+                style="font-size: 14px; vertical-align: middle;">lock</span>
+              {{ tag.name }}
+            </mat-chip>
+            }
+          </mat-chip-set>
+
+          <div class="tag-action-wrapper" style="position: relative; display: inline-flex;">
+            <button mat-icon-button class="add-tag-btn" (click)="openTagInput()" title="タグを追加">
+              <mat-icon>add_circle_outline</mat-icon>タグを追加
+            </button>
+            <div class="tag-popup" *ngIf="isTagInputOpen">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>タグを検索・追加</mat-label>
+                <input type="text" matInput [matAutocomplete]="auto" (input)="onTagInput($event)"
+                  (keyup.enter)="addTag(tagInput.value)" #tagInput maxlength="40">
+
+                <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event.option.value)">
+                  @for (suggest of suggestTags; track suggest.tag_id) {
+                  <mat-option [value]="suggest.name">{{ suggest.name }}</mat-option>
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
       </mat-card-subtitle>
     </mat-card-header>
 

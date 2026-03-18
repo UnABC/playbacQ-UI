@@ -3,7 +3,8 @@
 	<div class="toolbar">
 		<h1 class="app-title">playbacQ</h1>
 		<div class="search-bar">
-			<input #searchInput type="text" placeholder="動画を検索..." (keyup.enter)="onSearch(searchInput.value)">
+			<input #searchInput type="text" placeholder="動画を検索..." (keyup.enter)="onSearch(searchInput.value)"
+				maxlength="1024">
 			<button mat-icon-button (click)="onSearch(searchInput.value)">
 				<mat-icon>search</mat-icon>
 			</button>

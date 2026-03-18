@@ -31,6 +31,10 @@ export class App {
 
   onSearch(keyword: string) {
     if (keyword.trim()) {
+      if (keyword.length > 1024) {
+        alert('あり得ないことが起きています。HTMLを改竄していませんか？');
+        return;
+      }
       // ホーム画面（/）にクエリパラメータ ?search=keyword を付けて遷移
       this.router.navigate(['/'], { queryParams: { search: keyword } });
     } else {

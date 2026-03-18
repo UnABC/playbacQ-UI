@@ -275,3 +275,52 @@
   visibility: visible;
   transform: translateY(0);
 }
+
+.add-tag-btn {
+  background: none;
+  border: none;
+  color: #3f51b5;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-tag-btn:hover {
+  text-decoration: underline;
+  background-color: #e0e0e0;
+}
+
+.tag-popup {
+  position: absolute;
+  top: 100%;
+  /* ボタンのすぐ下に配置 */
+  left: 0;
+  /* 左端に合わせる（デザインに応じて調整してね） */
+  margin-top: 12px;
+  padding: 16px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  /* ふんわりした影で浮かせる */
+  z-index: 100;
+  width: 250px;
+}
+
+/* 吹き出しのしっぽ（三角形） */
+.tag-popup::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  /* 本体の上にはみ出させる */
+  left: 24px;
+  /* +ボタンの真下あたりに調整 */
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  transform: rotate(45deg);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  /* うっすら境界線 */
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+}

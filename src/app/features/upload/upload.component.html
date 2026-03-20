@@ -72,7 +72,8 @@
 		<mat-step label="完了" [editable]="false">
 			<div class="step-content">
 				<h3>アップロードが完了しました！</h3>
-				<button mat-button mat-dialog-close>トップへ戻る</button>
+				<p>動画のタイトル: <b>{{ videoForm.get('title')?.value }}</b></p>
+				<button mat-button mat-dialog-close>閉じる</button>
 			</div>
 		</mat-step>
 

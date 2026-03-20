@@ -47,6 +47,7 @@ export class UploadComponent {
   videoDescription: string = '';
   uploadProgress: number = 0;
   uploadStatusMessage: string = '';
+  uploadedVideoUrl: string = '';
   @ViewChild('stepper') private stepper!: MatStepper;
 
   steps = ['動画の選択', '基本情報の入力', 'アップロード', '完了'];
@@ -150,9 +151,8 @@ export class UploadComponent {
           }),
         )
         .subscribe({
-          next: (videos) => {
+          next: () => {
             // 全てが完了
-            console.log('動画の作成とアップロードが完了しました。', videos);
             this.stepper.next();
           },
           error: (err) => {

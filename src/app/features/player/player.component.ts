@@ -49,6 +49,7 @@ type Plyr = PlyrType;
     LinkifyPipe,
     RouterLink,
   ],
+  standalone: true,
   templateUrl: './player.component.html',
   styleUrls: ['./player.component.css'],
 })

@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [RouterModule, MatDialogModule, MatButtonModule, MatIconModule],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -26,7 +27,9 @@ export class App {
     });
 
     // 閉じた後の処理（必要に応じて動画リストの更新などを行う）
-    dialogRef.afterClosed().subscribe(() => {});
+    dialogRef.afterClosed().subscribe(() => {
+      this.router.navigate(['/'], { queryParams: { reload: new Date().getTime() } });
+    });
   }
 
   onSearch(keyword: string) {

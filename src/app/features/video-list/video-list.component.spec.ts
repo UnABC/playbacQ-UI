@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { VideoListComponent } from './video-list.component';
 import { VideoService } from '../../core/services/video.service';
-import { Router } from '@angular/router';
 import { of, BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';

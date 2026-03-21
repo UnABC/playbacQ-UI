@@ -1,9 +1,11 @@
 # PlaybacQUI
+
 動画共有サービス
 
-・バックエンド：https://github.com/UnABC/playbacQ
+・バックエンド: [https://github.com/UnABC/playbacQ](https://github.com/UnABC/playbacQ)
 
 ## ビルド
+
 `docker compose up --build`
 
 ## 以下は Angular CLI の README から抜粋

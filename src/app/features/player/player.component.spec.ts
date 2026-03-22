@@ -5,15 +5,40 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlayerComponent } from './player.component';
 import { TagService } from '../../core/services/tag.service';
 import { VideoService } from '../../core/services/video.service';
-import { of } from 'rxjs';
+import { CommentService } from '../../core/services/comment.service';
+import { of, Subject } from 'rxjs';
 import { vi } from 'vitest';
+import { By } from '@angular/platform-browser';
+
+let mockPlayingCallback: Function | null = null;
+let mockPauseCallback: Function | null = null;
+let mockSeekingCallback: Function | null = null;
+
+vi.mock('plyr', () => {
+  class MockPlyr {
+    constructor() {}
+    on(eventName: string, callback: Function) {
+      if (eventName === 'playing') {
+        mockPlayingCallback = callback;
+      } else if (eventName === 'pause') {
+        mockPauseCallback = callback;
+      } else if (eventName === 'seeking') {
+        mockSeekingCallback = callback;
+      }
+    }
+  }
+  return { default: MockPlyr };
+});
 
 describe('PlayerComponent', () => {
   let component: PlayerComponent;
   let fixture: ComponentFixture<PlayerComponent>;
   let tagService: TagService;
   let videoService: VideoService;
+  let commentService: CommentService;
+  let messagesSubject: Subject<any>;
   beforeEach(async () => {
+    messagesSubject = new Subject<any>();
     const mockTagService = {
       getTag: vi.fn().mockReturnValue(of([])),
     };
@@ -25,9 +50,18 @@ describe('PlayerComponent', () => {
           title: 'Test Video',
           user_id: 'user',
           description: 'A test video',
+          duration: 40,
         }),
       ),
       removeVideoTag: vi.fn().mockReturnValue(of(undefined)),
+      incrementViewCount: vi.fn().mockReturnValue(of({} as any)),
+    };
+    const mockCommentService = {
+      postComment: vi.fn().mockReturnValue(of({})),
+      connect: vi.fn().mockReturnValue(of({} as any)),
+      disconnect: vi.fn(),
+      getComments: vi.fn().mockReturnValue(of([])),
+      messages$: messagesSubject.asObservable(),
     };
     await TestBed.configureTestingModule({
       imports: [PlayerComponent],
@@ -37,21 +71,25 @@ describe('PlayerComponent', () => {
         provideHttpClientTesting(),
         { provide: TagService, useValue: mockTagService },
         { provide: VideoService, useValue: mockVideoService },
+        { provide: CommentService, useValue: mockCommentService },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlayerComponent);
     component = fixture.componentInstance;
     videoService = TestBed.inject(VideoService);
+    commentService = TestBed.inject(CommentService);
     component.videoMetadata = {
       video_id: 'ABCD1234',
       title: 'Test Video',
       user_id: 'user',
       description: 'A test video',
+      duration: 40,
     } as any;
     tagService = TestBed.inject(TagService);
     vi.useFakeTimers();
     fixture.detectChanges();
+    (component as any).videoId = 'ABCD1234';
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -112,4 +150,87 @@ describe('PlayerComponent', () => {
     expect(deleteVideoTagSpy).toHaveBeenCalledWith('ABCD1234', mockTag);
   });
   // コメント入力テスト
+  it('should update command selection', () => {
+    const commandInputEl = fixture.debugElement.query(By.css('.command-input'))
+      .nativeElement as HTMLInputElement;
+    component.toggleCommand('red', commandInputEl);
+    expect(commandInputEl.value).toBe('red');
+    component.toggleCommand('blue', commandInputEl);
+    expect(commandInputEl.value).toBe('blue');
+  });
+  it('postComment test', () => {
+    const commentInputEl = fixture.debugElement.query(By.css('.comment-input'))
+      .nativeElement as HTMLInputElement;
+    const commandInputEl = fixture.debugElement.query(By.css('.command-input'))
+      .nativeElement as HTMLInputElement;
+    commentInputEl.value = 'Test Comment';
+    commandInputEl.value = 'ue big red';
+    const postCommentSpy = vi.spyOn(commentService, 'postComment').mockReturnValue(of({} as any));
+    (component as any).player = { currentTime: 120 };
+    const sendButton = fixture.debugElement.query(By.css('.comment-send-btn')).nativeElement;
+    sendButton.click();
+    expect(postCommentSpy).toHaveBeenCalledWith(
+      component['videoId'],
+      'Test Comment',
+      120,
+      'ue big red',
+    );
+  });
+  it('should cancel posting comment when comment or command is too long', () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const commentInputEl = fixture.debugElement.query(By.css('.comment-input'))
+      .nativeElement as HTMLInputElement;
+    const commandInputEl = fixture.debugElement.query(By.css('.command-input'))
+      .nativeElement as HTMLInputElement;
+    commentInputEl.value = 'a'.repeat(201);
+    commandInputEl.value = 'red';
+    const sendButton = fixture.debugElement.query(By.css('.comment-send-btn')).nativeElement;
+    sendButton.click();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'あり得ないことが起きています。HTMLを改竄していませんか？',
+    );
+    commentInputEl.value = 'Test Comment';
+    commandInputEl.value = 'a'.repeat(129);
+    sendButton.click();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'あり得ないことが起きています。HTMLを改竄していませんか？',
+    );
+  });
+  // WebSocketからのリアルタイム受信テスト
+  it('should receive comments in real-time', () => {
+    messagesSubject.next({ content: 'Real-time Comment', timestamp: 123, command: 'red' });
+    expect((component as any).comments.length).toBe(1);
+    expect((component as any).comments[0].text).toBe('Real-time Comment');
+    expect((component as any).comments[0].timestamp).toBe(123);
+    expect((component as any).comments[0].fillColor).toBe('#FF0000');
+  });
+  // 再生数カウントテスト
+  it('should count view when video is played', async () => {
+    const incrementSpy = vi
+      .spyOn(videoService, 'incrementViewCount')
+      .mockReturnValue(of({} as any));
+    component.initPlyr(document.createElement('video'));
+    expect(mockPlayingCallback).not.toBeNull();
+    mockPlayingCallback!();
+    await vi.advanceTimersByTimeAsync(9999);
+    expect(incrementSpy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(incrementSpy).toHaveBeenCalledTimes(1);
+    expect(incrementSpy).toHaveBeenCalledWith('ABCD1234');
+  });
+  it('should cancel view count if video is seeking before 10 seconds', async () => {
+    const incrementSpy = vi
+      .spyOn(videoService, 'incrementViewCount')
+      .mockReturnValue(of({} as any));
+    component.initPlyr(document.createElement('video'));
+    expect(mockPlayingCallback).not.toBeNull();
+    mockPlayingCallback!();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(mockSeekingCallback).not.toBeNull();
+    mockSeekingCallback!();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(incrementSpy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(incrementSpy).not.toHaveBeenCalled();
+  });
 });

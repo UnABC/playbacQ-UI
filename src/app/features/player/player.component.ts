@@ -321,8 +321,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       });
 
-      // 一時停止やシーク（飛ばし）を検知したらタイマーを潰す！
-      this.player.on('pause', () => clearTimeout(this.viewTimer));
+      // シーク（飛ばし）を検知したらタイマーを潰す！
       this.player.on('seeking', () => clearTimeout(this.viewTimer));
     }
   }
@@ -435,11 +434,12 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       .toLowerCase()
       .split(/\s+/)
       .filter((c) => c !== '');
-    const isColor = this.CMD_COLORS.includes(cmd);
+    const isColor = this.CMD_COLORS.includes(cmd) || cmd.startsWith('#');
     const isPos = this.CMD_POSITIONS.includes(cmd);
     const isSize = this.CMD_SIZES.includes(cmd);
 
-    if (isColor) currentCmds = currentCmds.filter((c) => !this.CMD_COLORS.includes(c));
+    if (isColor)
+      currentCmds = currentCmds.filter((c) => !this.CMD_COLORS.includes(c) && !c.startsWith('#'));
     if (isPos) currentCmds = currentCmds.filter((c) => !this.CMD_POSITIONS.includes(c));
     if (isSize) currentCmds = currentCmds.filter((c) => !this.CMD_SIZES.includes(c));
 

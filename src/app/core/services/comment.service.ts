@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { Subject, Observable } from 'rxjs';
 import { Comment } from '../models/video.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -16,10 +17,7 @@ export class CommentService {
 
   connect(videoId: string): void {
     if (this.socket$) return;
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws/comments?video_id=${videoId}`;
+    const wsUrl = `${environment.wsUrl}/ws/comments?video_id=${videoId}`;
 
     this.socket$ = webSocket(wsUrl);
 
@@ -47,7 +45,7 @@ export class CommentService {
   }
 
   getComments(videoId: string): Observable<Comment[]> {
-    return this.http.get<Comment[]>(`/api/videos/${videoId}/comments`);
+    return this.http.get<Comment[]>(`${environment.apiUrl}/api/videos/${videoId}/comments`);
   }
 
   postComment(
@@ -56,6 +54,10 @@ export class CommentService {
     timestamp: number,
     command: string,
   ): Observable<any> {
-    return this.http.post(`/api/videos/${videoId}/comments`, { content, timestamp, command });
+    return this.http.post(`${environment.apiUrl}/api/videos/${videoId}/comments`, {
+      content,
+      timestamp,
+      command,
+    });
   }
 }

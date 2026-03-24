@@ -5,13 +5,14 @@ import { Video, Progress } from '../models/video.model';
 import { Tag } from '../models/tag.model';
 import { interval } from 'rxjs';
 import { switchMap, takeWhile } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class VideoService {
   private http = inject(HttpClient);
-  private readonly apiUrl = '/api/videos';
+  private readonly apiUrl = environment.apiUrl + '/api/videos';
 
   getVideos(params: any): Observable<Video[]> {
     return this.http.get<Video[]>(this.apiUrl, { params });

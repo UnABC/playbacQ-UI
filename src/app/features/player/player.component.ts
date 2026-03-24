@@ -27,6 +27,7 @@ import { CommentService } from '../../core/services/comment.service';
 import { TagService } from '../../core/services/tag.service';
 import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
+import { environment } from '../../../environments/environment';
 import { Comment } from './comment';
 import { LinkifyPipe } from '../../shared/pipes/linkify-pipe';
 import * as Plyr_ from 'plyr';
@@ -156,7 +157,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   initPlayer(): void {
     const video: HTMLVideoElement = this.videoRef.nativeElement;
-    const manifestUrl = `/api/videos/${this.videoId}/play`;
+    const manifestUrl = `${environment.apiUrl}/api/videos/${this.videoId}/play`;
 
     // Apple系以外のブラウザではHLS.jsを使用して動画を再生
     if (Hls.isSupported()) {
@@ -261,7 +262,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 1.75, 2, 3] },
       previewThumbnails: {
         enabled: true,
-        src: `/api/videos/${this.videoId}/vtt`,
+        src: `${environment.apiUrl}/api/videos/${this.videoId}/vtt`,
       },
     });
 

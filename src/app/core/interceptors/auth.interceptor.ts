@@ -3,8 +3,7 @@ import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // 対象がバックエンドAPIの場合のみ処理する
-  const isApiUrl =
-    req.url.startsWith('https://playbacq-backend.trap.show') || req.url.startsWith('/api');
+  const isApiUrl = req.url.startsWith('https://playbacq.trap.show') || req.url.startsWith('/api');
 
   if (isApiUrl) {
     // プロキシのセッションCookieをクロスドメインで送信する設定
@@ -18,7 +17,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           console.warn('認証セッションがありません。ログインが必要です。');
           // PaaSプロキシにOAuthの画面遷移を処理させる。
           const redirectUrl = encodeURIComponent(window.location.href);
-          window.location.href = `https://playbacq-backend.trap.show/api/auth/login?redirect=${redirectUrl}`;
+          window.location.href = `https://playbacq.trap.show/api/auth/login?redirect=${redirectUrl}`;
         }
         return throwError(() => error);
       }),

@@ -31,8 +31,8 @@ export class VideoService {
     return this.http.post(`${this.apiUrl}/${id}/views`, {});
   }
 
-  createVideo(title: string, description: string, contentType: string): Observable<Video> {
-    return this.http.post<Video>(this.apiUrl, { title, description, contentType });
+  createVideo(title: string, description: string, content_type: string): Observable<Video> {
+    return this.http.post<Video>(this.apiUrl, { title, description, content_type });
   }
 
   getVideoTags(id: string): Observable<Tag[]> {

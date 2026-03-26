@@ -17,6 +17,7 @@ import { MatIcon } from '@angular/material/icon';
 import { HttpEventType } from '@angular/common/http';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { switchMap, tap, filter } from 'rxjs/operators';
+import { url } from 'node:inspector';
 
 @Component({
   selector: 'app-upload',
@@ -120,6 +121,7 @@ export class UploadComponent {
         .pipe(
           switchMap((videos) => {
             this.uploadStatusMessage = 'MinIOへアップロード中...';
+            console.log('Received video info from backend:', videos);
             return this.uploadService.uploadToMinio(videos.uploadUrl, this.selectedFile!).pipe(
               tap((event) => {
                 if (event.type === HttpEventType.UploadProgress && event.total) {

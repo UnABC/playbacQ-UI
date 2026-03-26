@@ -117,11 +117,10 @@ export class UploadComponent {
     setTimeout(() => {
       this.stepper.next();
       this.videoService
-        .createVideo(title, description)
+        .createVideo(title, description, this.selectedFile!.type)
         .pipe(
           switchMap((videos) => {
             this.uploadStatusMessage = 'MinIOへアップロード中...';
-            console.log('Received video info from backend:', videos);
             return this.uploadService.uploadToMinio(videos.uploadUrl, this.selectedFile!).pipe(
               tap((event) => {
                 if (event.type === HttpEventType.UploadProgress && event.total) {

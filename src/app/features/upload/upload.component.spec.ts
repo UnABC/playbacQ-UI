@@ -103,7 +103,7 @@ describe('UploadComponent', () => {
     vi.spyOn(videoService, 'pollUploadProgress').mockReturnValue(of({ status: 2, progress: 100 }));
     component.startUpload();
     await vi.runAllTimersAsync();
-    expect(createVideoSpy).toHaveBeenCalledWith('Test Video', 'Test Description');
+    expect(createVideoSpy).toHaveBeenCalledWith('Test Video', 'Test Description', 'video/mp4');
   });
   it('Progress polling test', async () => {
     component.videoForm.controls.title.setValue('Test Video');

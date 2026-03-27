@@ -1,7 +1,8 @@
 <!-- TODO: 後で表示/非表示を切り替えられるようにする! -->
 <div class="app-container">
 	<div class="toolbar">
-		<h1 class="app-title">playbacQ</h1>
+		<h1 class="app-title" routerLink="/video" style="cursor: pointer; user-select: none; display: inline-block;">
+			playbacQ</h1>
 		<div class="search-bar">
 			<input #searchInput type="text" placeholder="動画を検索..." (keyup.enter)="onSearch(searchInput.value)"
 				maxlength="1024">

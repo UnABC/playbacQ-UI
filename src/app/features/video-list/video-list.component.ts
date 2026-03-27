@@ -34,18 +34,15 @@ export class VideoListComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
-      const searchKeyword = params['search'] || ''; // ?search= の値を取得
-      const tagKeyword = params['tag'] || '';
-
       this.currentSort = params['sortby'] || 'created_at';
       this.currentOrder = params['order'] !== undefined ? +params['order'] : 0;
 
       this.videoService
         .getVideos({
-          search: searchKeyword,
+          ...(params['search'] && { search: params['search'] }),
           sortby: this.currentSort,
           order: this.currentOrder,
-          tag: tagKeyword,
+          ...(params['tag'] && { tag: params['tag'] }),
         })
         .subscribe((videos) => {
           this.videoList = videos;

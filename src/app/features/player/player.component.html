@@ -72,7 +72,7 @@
       <mat-card-subtitle class="video-stats"
         style="display: flex; gap: 16px; font-size: 14px; color: #666; align-items: center;">
         <div>
-          {{ videoMetadata.created_at | date:'yyyy/MM/dd HH:mm':'+0900' }}
+          {{ createdAtUtc | date:'yyyy/MM/dd HH:mm':'+0900' }}
         </div>
         <div style="display: flex; align-items: center;">
           <mat-icon>

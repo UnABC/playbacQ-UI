@@ -81,6 +81,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   isLoading = true;
   videoMetadata: Video | null = null;
+  createdAtUtc: Date | null = null;
   tags: Tag[] = [];
   suggestTags: Tag[] = [];
   isTagInputOpen = false;
@@ -92,6 +93,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       this.videoId = params.get('id') as string;
       this.videoService.getVideoById(this.videoId).subscribe((video) => {
         this.videoMetadata = video;
+        this.createdAtUtc = this.parseUtcDate(video.created_at);
       });
       this.initPlayer();
       this.commentService.getComments(this.videoId).subscribe((comments) => {
@@ -129,6 +131,18 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         });
     });
   }
+
+    private parseUtcDate(value: string): Date | null {
+      if (!value) {
+        return null;
+      }
+
+      const normalized = value.replace(' ', 'T');
+      const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+      const date = new Date(hasTimezone ? normalized : `${normalized}Z`);
+
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
 
   ngAfterViewInit(): void {
     const canvas = this.commentCanvasRef.nativeElement;

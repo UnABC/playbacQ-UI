@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrl: './app.css',
 })
 export class App {
-  protected readonly title = signal('playbacQ-UI');
+  protected readonly title = signal('playbacQ');
   dialog = inject(MatDialog);
   private router = inject(Router);
 

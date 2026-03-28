@@ -26,6 +26,10 @@ export class VideoService {
     return this.http.delete(this.apiUrl, { body: { video_id: id } });
   }
 
+  editVideo(id: string, title: string, description: string): Observable<Video> {
+    return this.http.patch<Video>(`${this.apiUrl}/${id}`, { title, description });
+  }
+
   getVideoProgress(id: string): Observable<Progress> {
     // キャッシュを防ぐためにクエリパラメータにタイムスタンプを追加
     return this.http.get<Progress>(`${this.apiUrl}/${id}/progress?t=${new Date().getTime()}`);

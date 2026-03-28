@@ -17,6 +17,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIcon } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -29,6 +30,7 @@ import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
 import { environment } from '../../../environments/environment';
 import { Comment } from './comment';
+import { EditVideoDialogComponent } from './edit-video-dialog.component';
 import { LinkifyPipe } from '../../shared/pipes/linkify-pipe';
 import * as Plyr_ from 'plyr';
 import type PlyrType from 'plyr';
@@ -68,6 +70,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private commentService = inject(CommentService);
   private tagService = inject(TagService);
   private cdr = inject(ChangeDetectorRef);
+  private dialog = inject(MatDialog);
   private hls: Hls | null = null;
   private videoId: string = '';
   private player: Plyr | null = null;
@@ -132,17 +135,17 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-    private parseUtcDate(value: string): Date | null {
-      if (!value) {
-        return null;
-      }
-
-      const normalized = value.replace(' ', 'T');
-      const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
-      const date = new Date(hasTimezone ? normalized : `${normalized}Z`);
-
-      return Number.isNaN(date.getTime()) ? null : date;
+  private parseUtcDate(value: string): Date | null {
+    if (!value) {
+      return null;
     }
+
+    const normalized = value.replace(' ', 'T');
+    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+    const date = new Date(hasTimezone ? normalized : `${normalized}Z`);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
 
   ngAfterViewInit(): void {
     const canvas = this.commentCanvasRef.nativeElement;
@@ -521,7 +524,6 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   deleteVideo(): void {
     this.isMoreMenuOpen = false;
-
     if (!this.videoMetadata) return;
 
     if (confirm('本当にこの動画を削除しますか？\nこの操作は取り消せません。')) {
@@ -537,6 +539,40 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         },
       });
     }
+  }
+
+  editVideo(): void {
+    this.isMoreMenuOpen = false;
+    if (!this.videoMetadata) return;
+
+    const dialogRef = this.dialog.open(EditVideoDialogComponent, {
+      width: '600px',
+      disableClose: true,
+      data: {
+        title: this.videoMetadata.title,
+        description: this.videoMetadata.description,
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .subscribe((result: { title: string; description: string } | undefined) => {
+        if (result) {
+          this.videoService
+            .editVideo(this.videoMetadata!.video_id, result.title, result.description)
+            .subscribe({
+              next: (updatedVideo) => {
+                this.videoMetadata = updatedVideo;
+                alert('動画情報を更新しました。');
+                this.cdr.detectChanges();
+              },
+              error: (err) => {
+                console.error('Failed to edit video:', err);
+                alert('動画の編集に失敗しました。');
+              },
+            });
+        }
+      });
   }
 
   openTagInput(): void {

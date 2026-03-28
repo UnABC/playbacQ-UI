@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlayerComponent } from './player.component';
@@ -9,6 +9,7 @@ import { CommentService } from '../../core/services/comment.service';
 import { of, Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { R } from '@angular/cdk/keycodes';
 
 let mockPlayingCallback: Function | null = null;
 let mockPauseCallback: Function | null = null;
@@ -55,6 +56,7 @@ describe('PlayerComponent', () => {
       ),
       removeVideoTag: vi.fn().mockReturnValue(of(undefined)),
       incrementViewCount: vi.fn().mockReturnValue(of({} as any)),
+      deleteVideo: vi.fn().mockReturnValue(of({} as any)),
     };
     const mockCommentService = {
       postComment: vi.fn().mockReturnValue(of({})),
@@ -232,5 +234,27 @@ describe('PlayerComponent', () => {
     expect(incrementSpy).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(5000);
     expect(incrementSpy).not.toHaveBeenCalled();
+  });
+  // 動画削除のテスト
+  it('should delete video after confirmation', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const deleteVideoSpy = vi.spyOn(videoService, 'deleteVideo').mockReturnValue(of({} as any));
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    component.deleteVideo();
+    expect(confirmSpy).toHaveBeenCalledWith(
+      '本当にこの動画を削除しますか？\nこの操作は取り消せません。',
+    );
+    expect(deleteVideoSpy).toHaveBeenCalledWith('ABCD1234');
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
+  });
+  it('should not delete video if confirmation is cancelled', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const deleteVideoSpy = vi.spyOn(videoService, 'deleteVideo').mockReturnValue(of({} as any));
+    component.deleteVideo();
+    expect(confirmSpy).toHaveBeenCalledWith(
+      '本当にこの動画を削除しますか？\nこの操作は取り消せません。',
+    );
+    expect(deleteVideoSpy).not.toHaveBeenCalled();
   });
 });

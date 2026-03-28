@@ -60,6 +60,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('commandInput') commandInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('commentCanvas') commentCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('tagActionWrapper') tagActionWrapperRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('moreMenuWrapper') moreMenuWrapperRef!: ElementRef<HTMLDivElement>;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -84,6 +85,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   suggestTags: Tag[] = [];
   isTagInputOpen = false;
   isCommentVisible = true;
+  isMoreMenuOpen = false;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -483,11 +485,43 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
+    // タグ入力のドロップダウンが開いている状態で、ドロップダウンの外側がクリックされたら閉じる
     if (this.isTagInputOpen && this.tagActionWrapperRef) {
       const clickedInside = this.tagActionWrapperRef.nativeElement.contains(event.target as Node);
       if (!clickedInside) {
         this.isTagInputOpen = false;
       }
+    }
+    // その他のメニューが開いている状態で、メニューの外側がクリックされたら閉じる
+    if (this.isMoreMenuOpen && this.moreMenuWrapperRef) {
+      const clickedInside = this.moreMenuWrapperRef.nativeElement.contains(event.target as Node);
+      if (!clickedInside) {
+        this.isMoreMenuOpen = false;
+      }
+    }
+  }
+
+  toggleMoreMenu(): void {
+    this.isMoreMenuOpen = !this.isMoreMenuOpen;
+  }
+
+  deleteVideo(): void {
+    this.isMoreMenuOpen = false;
+
+    if (!this.videoMetadata) return;
+
+    if (confirm('本当にこの動画を削除しますか？\nこの操作は取り消せません。')) {
+      console.log('動画削除処理を実行:', this.videoId);
+      this.videoService.deleteVideo(this.videoId).subscribe({
+        next: () => {
+          alert('動画を削除しました。');
+          this.router.navigate(['/']);
+        },
+        error: (err) => {
+          console.error('Failed to delete video:', err);
+          alert('動画の削除に失敗しました。');
+        },
+      });
     }
   }
 

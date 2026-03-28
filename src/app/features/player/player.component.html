@@ -52,6 +52,18 @@
     <input #commentInput type="text" class="comment-input" placeholder="コメント..." (keyup.enter)="sendComment()"
       maxlength="140">
     <button class="comment-send-btn" (click)="sendComment()">送信</button>
+    <div class="more-menu-wrapper" #moreMenuWrapper>
+      <button class="more-options-btn" (click)="toggleMoreMenu()" title="その他のオプション">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+
+      <div class="more-popup" *ngIf="isMoreMenuOpen">
+        <button class="delete-video-btn" (click)="deleteVideo()">
+          <mat-icon>delete</mat-icon>
+          <span>動画を削除</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <mat-card *ngIf="videoMetadata" class="metadata-card">

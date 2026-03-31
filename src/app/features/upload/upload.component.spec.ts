@@ -63,6 +63,10 @@ describe('UploadComponent', () => {
     expect(component.isDragging).toBe(true);
     expect(mockDragEvent.preventDefault).toHaveBeenCalled();
     expect(mockDragEvent.stopPropagation).toHaveBeenCalled();
+    component.onDragLeave(mockDragEvent);
+    expect(component.isDragging).toBe(false);
+    expect(mockDragEvent.preventDefault).toHaveBeenCalledTimes(2);
+    expect(mockDragEvent.stopPropagation).toHaveBeenCalledTimes(2);
   });
   it('Pass the file to the service test', () => {
     const mockVideoFile = new File(['dummy content'], 'test.mp4', { type: 'video/mp4' });
@@ -76,6 +80,35 @@ describe('UploadComponent', () => {
     component.onDrop(mockDropEvent);
     expect(component.selectedFile).toBe(mockVideoFile);
     expect(component.hasFile).toBe(true);
+  });
+  it('Pass the file through file input test', () => {
+    const mockVideoFile = new File(['dummy content'], 'test.mp4', { type: 'video/mp4' });
+    const mockInputEvent = {
+      target: {
+        files: [mockVideoFile],
+      },
+    } as unknown as Event;
+    component.onFileSelected(mockInputEvent);
+    expect(component.selectedFile).toBe(mockVideoFile);
+    expect(component.hasFile).toBe(true);
+  });
+  it('should not call handleFile if no files are selected', () => {
+    const handleFileSpy = vi.spyOn(component as any, 'handleFile');
+    const mockInputEvent = {
+      target: {
+        files: [],
+      },
+    } as unknown as Event;
+    component.onFileSelected(mockInputEvent);
+    expect(handleFileSpy).not.toHaveBeenCalled();
+    component.onDrop({
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      dataTransfer: {
+        files: [],
+      },
+    } as unknown as DragEvent);
+    expect(handleFileSpy).not.toHaveBeenCalled();
   });
   it('Pass invalid file test', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
@@ -135,6 +168,77 @@ describe('UploadComponent', () => {
     expect(component.uploadProgress).toBe(25);
     mockUploadSubject.next({ type: HttpEventType.Response });
     mockUploadSubject.complete();
+  });
+  it('should replace undefined progress with 0% in status message', async () => {
+    component.videoForm.controls.title.setValue('Test Video');
+    component.videoForm.controls.description.setValue('Test Description');
+    component.selectedFile = new File(['dummy content'], 'test.mp4', { type: 'video/mp4' });
+    const mockResponse = {
+      uploadUrl: 'http://dummy.url',
+      video_id: 'ABCD1234',
+      user_id: 'user1',
+      title: 'Test Video',
+      description: 'Test Description',
+      video_url: 'http://example.com/video.mp4',
+    } as any;
+    vi.spyOn(videoService, 'createVideo').mockReturnValue(of(mockResponse));
+    vi.spyOn(uploadService, 'uploadToMinio').mockReturnValue(of(new HttpResponse({ status: 200 })));
+    vi.spyOn(videoService, 'pollUploadProgress').mockReturnValue(
+      of({ status: 1, progress: undefined }),
+    );
+    component.startUpload();
+    await vi.runAllTimersAsync();
+    expect(component.uploadStatusMessage).toContain('エンコード処理中... (0%)');
+  });
+  it('should return early if form is invalid on upload', () => {
+    const createVideoSpy = vi.spyOn(videoService, 'createVideo');
+    component.startUpload();
+    expect(createVideoSpy).not.toHaveBeenCalled();
+  });
+  it('should return early if no file is selected on upload', () => {
+    component.videoForm.controls.title.setValue('Test Video');
+    const createVideoSpy = vi.spyOn(videoService, 'createVideo');
+    component.startUpload();
+    expect(createVideoSpy).not.toHaveBeenCalled();
+  });
+  it('should show error message if failed to encode video', async () => {
+    component.videoForm.controls.title.setValue('Test Video');
+    component.videoForm.controls.description.setValue('Test Description');
+    component.selectedFile = new File(['dummy content'], 'test.mp4', { type: 'video/mp4' });
+    const mockResponse = {
+      uploadUrl: 'http://dummy.url',
+      video_id: 'ABCD1234',
+      user_id: 'user1',
+      title: 'Test Video',
+      description: 'Test Description',
+      video_url: 'http://example.com/video.mp4',
+    } as any;
+    vi.spyOn(videoService, 'createVideo').mockReturnValue(of(mockResponse));
+    vi.spyOn(uploadService, 'uploadToMinio').mockReturnValue(of(new HttpResponse({ status: 200 })));
+    vi.spyOn(videoService, 'pollUploadProgress').mockReturnValue(of({ status: 3, progress: 100 }));
+    component.startUpload();
+    await vi.runAllTimersAsync();
+    expect(component.uploadStatusMessage).toBe('エンコードに失敗しました。');
+  });
+  it('should alert if received 500 error from MinIO', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    component.videoForm.controls.title.setValue('Test Video');
+    component.videoForm.controls.description.setValue('Test Description');
+    component.selectedFile = new File(['dummy content'], 'test.mp4', { type: 'video/mp4' });
+    const mockResponse = {
+      uploadUrl: 'http://dummy.url',
+      video_id: 'ABCD1234',
+      user_id: 'user1',
+      title: 'Test Video',
+      description: 'Test Description',
+      video_url: 'http://example.com/video.mp4',
+    } as any;
+    vi.spyOn(videoService, 'createVideo').mockReturnValue(of(mockResponse));
+    vi.spyOn(uploadService, 'uploadToMinio').mockReturnValue(of(new HttpResponse({ status: 500 })));
+    component.startUpload();
+    await vi.runAllTimersAsync();
+    expect(alertSpy).toHaveBeenCalledWith('動画の作成に失敗しました。もう一度お試しください。');
+    alertSpy.mockRestore();
   });
   // HTML側のテスト
   it('upload button should be disabled when form is invalid', () => {
@@ -209,7 +313,7 @@ describe('UploadComponent', () => {
     (component as any).handleFile(mockFile);
     await vi.runAllTimersAsync();
     fixture.detectChanges();
-	expect((component as any).stepper.selectedIndex).toBe(1);
+    expect((component as any).stepper.selectedIndex).toBe(1);
 
     const mockResponse = {
       uploadUrl: 'http://dummy.url',

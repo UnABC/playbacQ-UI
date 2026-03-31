@@ -23,7 +23,7 @@ export class CommentService {
 
     this.socket$.subscribe({
       next: (msg) => {
-        // バックエンドからデータが来たら、ストリーム(messages$)に流す！
+        // バックエンドからデータが来たら、ストリーム(messages$)に流す
         this.messagesSubject.next(msg);
       },
       error: (err) => {

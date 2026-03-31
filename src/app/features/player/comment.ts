@@ -99,7 +99,8 @@ export class Comment {
       }
     }
     fontSize *= 2.3;
-    this.textXsize = fontSize * text.length;
+    fontSize = Math.round(fontSize);
+    this.textXsize = Math.round(fontSize * text.length);
     this.font = `bold ${fontSize}px ${fontName}`;
     this.height = fontSize * commentLineLength;
     if (this.position === 'naka') {

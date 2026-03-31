@@ -309,11 +309,11 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
           // 初期アイコン（chat）を設定
           toggleBtn.innerHTML = '<span class="material-icons" style="font-size: 18px;">chat</span>';
 
-          // ボタンがクリックされた時の処理
+          // コメント表示/非表示ボタンがクリックされた時の処理
           toggleBtn.addEventListener('click', () => {
             this.isCommentVisible = !this.isCommentVisible;
             if (this.commentCanvasRef) {
-              // 元のopacityが0.9だから、表示時は0.9に戻す
+              // 元のコメントのopacityが0.9だから、表示時は0.9に戻す
               this.commentCanvasRef.nativeElement.style.opacity = this.isCommentVisible
                 ? '0.9'
                 : '0';
@@ -341,7 +341,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       });
 
-      // シーク（飛ばし）を検知したらタイマーを潰す！
+      // シーク（飛ばし）を検知したらタイマーを潰す
       this.player.on('seeking', () => clearTimeout(this.viewTimer));
     }
   }

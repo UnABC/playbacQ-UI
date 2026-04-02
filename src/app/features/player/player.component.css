@@ -456,3 +456,64 @@
   width: 20px;
   height: 20px;
 }
+
+.like-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 20px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.like-btn:hover {
+  background-color: #fce4ec;
+  /* ホバー時の薄いピンク背景 */
+  color: #e91e63;
+  /* Material DesignのPink */
+}
+
+.like-btn.liked {
+  color: #e91e63;
+  /* いいね済み状態の色 */
+}
+
+.like-btn mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* クリックした瞬間の押し込みエフェクト */
+.like-btn:active mat-icon {
+  transform: scale(0.8);
+}
+
+/* いいねがアクティブになった時のポップアニメーション */
+.like-btn.liked mat-icon {
+  animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.3);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.like-count {
+  font-size: 1rem;
+  font-weight: 500;
+}

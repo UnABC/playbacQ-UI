@@ -172,4 +172,29 @@ describe('VideoService', () => {
     expect(getVideoProgressSpy).toHaveBeenCalledWith('1');
     expect(progressValues).toEqual([mockProgressInProgress, mockProgressCompleted]);
   });
+  it('should get likes for a video', () => {
+    const mockLikes = ['user1', 'user2'];
+    service.getLikes('1').subscribe((likes) => {
+      expect(likes).toEqual(mockLikes);
+    });
+    const req = httpTestingController.expectOne(`${apiUrl}/1/likes`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockLikes);
+  });
+  it('should add a like to a video', () => {
+    service.addLike('1').subscribe((response) => {
+      expect(response).toEqual({ success: true });
+    });
+    const req = httpTestingController.expectOne(`${apiUrl}/1/likes`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ success: true });
+  });
+  it('should remove a like from a video', () => {
+    service.removeLike('1').subscribe((response) => {
+      expect(response).toEqual({ success: true });
+    });
+    const req = httpTestingController.expectOne(`${apiUrl}/1/likes`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ success: true });
+  });
 });

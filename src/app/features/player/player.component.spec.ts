@@ -68,6 +68,7 @@ describe('PlayerComponent', () => {
       deleteVideo: vi.fn().mockReturnValue(of({} as any)),
       editVideo: vi.fn().mockReturnValue(of({} as any)),
       getVideoTags: vi.fn().mockReturnValue(of([])),
+      getLikes: vi.fn().mockReturnValue(of([])),
     };
     const mockCommentService = {
       postComment: vi.fn().mockReturnValue(of({})),

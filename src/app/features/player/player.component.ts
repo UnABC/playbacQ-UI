@@ -25,6 +25,7 @@ import { Subscription, Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
+import { AuthService } from '../../core/services/auth.service';
 import { TagService } from '../../core/services/tag.service';
 import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
@@ -71,6 +72,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private tagService = inject(TagService);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+  private authService = inject(AuthService);
   private hls: Hls | null = null;
   private videoId: string = '';
   private player: Plyr | null = null;
@@ -90,6 +92,8 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   isTagInputOpen = false;
   isCommentVisible = true;
   isMoreMenuOpen = false;
+  isLiked = false;
+  likeCount = 0;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -132,6 +136,15 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
           this.suggestTags = tags;
           this.cdr.detectChanges();
         });
+    });
+
+    // いいねの状態を取得
+    this.videoService.getLikes(this.videoId).subscribe((likes) => {
+      this.authService.getUserID().subscribe((userId) => {
+        this.isLiked = likes.includes(userId?.userId ?? '');
+        this.likeCount = likes.length;
+        this.cdr.detectChanges();
+      });
     });
   }
 
@@ -520,6 +533,33 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   toggleMoreMenu(): void {
     this.isMoreMenuOpen = !this.isMoreMenuOpen;
+  }
+
+  toggleLike(): void {
+    this.isLiked = !this.isLiked;
+    if (this.isLiked) {
+      this.likeCount++;
+      this.videoService.addLike(this.videoId).subscribe({
+        next: () => {
+          console.log('Liked video ID:', this.videoId);
+        },
+        error: (err) => {
+          console.error('Failed to like video:', err);
+          alert('いいねの追加に失敗しました。');
+        },
+      });
+    } else {
+      this.likeCount = Math.max(0, this.likeCount - 1);
+      this.videoService.removeLike(this.videoId).subscribe({
+        next: () => {
+          console.log('Unliked video ID:', this.videoId);
+        },
+        error: (err) => {
+          console.error('Failed to unlike video:', err);
+          alert('いいねの削除に失敗しました。');
+        },
+      });
+    }
   }
 
   deleteVideo(): void {

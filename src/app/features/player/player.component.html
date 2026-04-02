@@ -52,6 +52,10 @@
     <input #commentInput type="text" class="comment-input" placeholder="コメント..." (keyup.enter)="sendComment()"
       maxlength="140">
     <button class="comment-send-btn" (click)="sendComment()">送信</button>
+    <button class="like-btn" (click)="toggleLike()" [class.liked]="isLiked" title="いいね">
+      <mat-icon>{{ isLiked ? 'favorite' : 'favorite_border' }}</mat-icon>
+      <span class="like-count" *ngIf="likeCount > 0">{{ likeCount }}</span>
+    </button>
     <div class="more-menu-wrapper" #moreMenuWrapper>
       <button class="more-options-btn" (click)="toggleMoreMenu()" title="その他のオプション">
         <mat-icon>more_vert</mat-icon>

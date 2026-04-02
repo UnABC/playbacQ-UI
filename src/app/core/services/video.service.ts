@@ -62,4 +62,16 @@ export class VideoService {
       takeWhile((res) => res.status !== 2 && res.status !== 3, true),
     );
   }
+
+  getLikes(videoId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/${videoId}/likes`);
+  }
+
+  addLike(videoId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${videoId}/likes`, {});
+  }
+
+  removeLike(videoId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${videoId}/likes`, {});
+  }
 }

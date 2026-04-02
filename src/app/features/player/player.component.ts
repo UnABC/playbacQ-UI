@@ -83,6 +83,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private animationFrameId: number = 0;
   private comments: Comment[] = [];
   private tagSearchSubject = new Subject<string>();
+  private userId: string | null = null;
 
   isLoading = true;
   videoMetadata: Video | null = null;
@@ -141,11 +142,16 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     // いいねの状態を取得
     this.videoService.getLikes(this.videoId).subscribe((likes) => {
       this.authService.getUserID().subscribe((userId) => {
-        this.isLiked = likes.includes(userId?.userId ?? '');
+        this.userId = userId?.userId ?? null;
+        this.isLiked = likes.includes(this.userId ?? '');
         this.likeCount = likes.length;
         this.cdr.detectChanges();
       });
     });
+  }
+
+  isVideoOwner(): boolean {
+    return this.userId === this.videoMetadata?.user_id;
   }
 
   private parseUtcDate(value: string): Date | null {

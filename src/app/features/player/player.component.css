@@ -19,6 +19,14 @@
   /* プレイヤーに少し影をつけて浮かせる */
 }
 
+.video-wrapper.embed-mode {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+}
+
 .video-element {
   width: 100%;
   height: 100%;
@@ -463,6 +471,7 @@
   gap: 6px;
   background: none;
   border: none;
+  border: 1px solid #e0e0e0;
   color: #666;
   cursor: pointer;
   padding: 8px 12px;
@@ -472,14 +481,14 @@
 
 .like-btn:hover {
   background-color: #fce4ec;
-  /* ホバー時の薄いピンク背景 */
+  border-color: #f8bbd0;
   color: #e91e63;
-  /* Material DesignのPink */
 }
 
 .like-btn.liked {
   color: #e91e63;
-  /* いいね済み状態の色 */
+  border-color: #f8bbd0;
+  background-color: #fff1f5;
 }
 
 .like-btn mat-icon {

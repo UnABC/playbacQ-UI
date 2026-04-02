@@ -1,4 +1,5 @@
 <div class="app-container">
+	@if (!isEmbed){
 	<div class="toolbar">
 		<h1 class="app-title" routerLink="/videos" style="cursor: pointer; user-select: none; display: inline-block;">
 			playbacQ</h1>
@@ -13,5 +14,6 @@
 			<mat-icon>upload</mat-icon> 動画を投稿
 		</button>
 	</div>
+	}
 	<router-outlet></router-outlet>
 </div>

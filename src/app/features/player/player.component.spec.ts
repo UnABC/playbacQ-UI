@@ -82,6 +82,7 @@ describe('PlayerComponent', () => {
     };
     const mockActivatedRoute = {
       paramMap: of({ get: (key: string) => (key === 'id' ? 'ABCD1234' : null) }),
+      snapshot: { data: {} },
     };
     await TestBed.configureTestingModule({
       imports: [PlayerComponent],

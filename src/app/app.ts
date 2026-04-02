@@ -1,9 +1,10 @@
 import { Component, signal, inject } from '@angular/core';
 import { UploadComponent } from './features/upload/upload.component';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,15 @@ export class App {
   protected readonly title = signal('playbacQ');
   dialog = inject(MatDialog);
   private router = inject(Router);
+  isEmbed = false;
+
+  constructor() {
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.isEmbed = event.urlAfterRedirects.startsWith('/embed');
+      });
+  }
 
   openUploadDialog() {
     const dialogRef = this.dialog.open(UploadComponent, {

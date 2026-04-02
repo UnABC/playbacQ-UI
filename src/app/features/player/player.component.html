@@ -1,5 +1,5 @@
 <div class="player-container">
-  <div class="video-wrapper" [class.is-loading]="isLoading">
+  <div [class.video-wrapper]="!isEmbed" [class.is-loading]="isLoading" [class.embed-mode]="isEmbed">
     <video #videoElement crossorigin="anonymous" class="video-element"></video>
 
     <canvas #commentCanvas class="danmaku-canvas"></canvas>
@@ -8,7 +8,7 @@
       <mat-spinner diameter="50"></mat-spinner>
     </div>
   </div>
-
+  @if (!isEmbed){
   <div class="comment-bar">
 
     <button class="command-toggle-btn" (click)="toggleCommandMenu()" title="コマンド設定">
@@ -141,4 +141,5 @@
       <p class="description" [innerHTML]="videoMetadata.description | linkify">{{ videoMetadata.description }}</p>
     </mat-card-content>
   </mat-card>
+  }
 </div>

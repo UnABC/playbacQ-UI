@@ -85,6 +85,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private tagSearchSubject = new Subject<string>();
   private userId: string | null = null;
 
+  isEmbed = false;
   isLoading = true;
   videoMetadata: Video | null = null;
   createdAtUtc: Date | null = null;
@@ -99,6 +100,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.videoId = params.get('id') as string;
+      this.isEmbed = this.route.snapshot.data['embed'] ?? false;
       this.videoService.getVideoById(this.videoId).subscribe((video) => {
         this.videoMetadata = video;
         this.createdAtUtc = this.parseUtcDate(video.created_at);

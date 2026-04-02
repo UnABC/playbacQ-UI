@@ -56,7 +56,7 @@
       <mat-icon>{{ isLiked ? 'favorite' : 'favorite_border' }}</mat-icon>
       <span class="like-count" *ngIf="likeCount > 0">{{ likeCount }}</span>
     </button>
-    <div class="more-menu-wrapper" *ngIf="isVideoOwner" #moreMenuWrapper>
+    <div class="more-menu-wrapper" *ngIf="isVideoOwner()" #moreMenuWrapper>
       <button class="more-options-btn" (click)="toggleMoreMenu()" title="その他のオプション">
         <mat-icon>more_vert</mat-icon>
       </button>

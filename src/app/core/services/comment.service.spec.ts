@@ -50,6 +50,29 @@ describe('CommentService', () => {
     req.flush(mockComments);
   });
 
+  it('should fetch comments for an embedded video', () => {
+    const mockComments: Comment[] = [
+      {
+        comment_id: 1,
+        comment: 'Great video!',
+        created_at: '2024-01-01T00:00:00Z',
+        timestamp: 1000,
+        command: 'red',
+        user_id: 'user123',
+        video_id: 'video123',
+      },
+    ];
+    service.getEmbedComments('video123', 'token123').subscribe((comments) => {
+      expect(comments).toEqual(mockComments);
+    });
+
+    const req = httpTestingController.expectOne(
+      `${environment.apiUrl}/embed/video123/comments?token=token123`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(mockComments);
+  });
+
   it('should post a comment to a video', () => {
     const mockResponse = { success: true };
     service.postComment('video123', 'Nice video!', 2000, 'blue').subscribe((response) => {

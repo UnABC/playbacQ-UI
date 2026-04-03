@@ -4,8 +4,9 @@ import { catchError, throwError } from 'rxjs';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // 対象がバックエンドAPIの場合のみ処理する
   const isApiUrl = req.url.startsWith('https://playbacq.trap.show') || req.url.startsWith('/api');
-
-  if (isApiUrl) {
+  const isEmbedApiUrl =
+    req.url.startsWith('https://playbacq.trap.show/unauthApi') || req.url.startsWith('/unauthApi');
+  if (isApiUrl && !isEmbedApiUrl) {
     // プロキシのセッションCookieをクロスドメインで送信する設定
     const clonedReq = req.clone({
       withCredentials: true,

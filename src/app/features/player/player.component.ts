@@ -21,6 +21,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Subscription, Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { VideoService } from '../../core/services/video.service';
@@ -52,6 +53,7 @@ type Plyr = PlyrType;
     MatFormFieldModule,
     LinkifyPipe,
     RouterLink,
+    MatSnackBarModule,
   ],
   standalone: true,
   templateUrl: './player.component.html',
@@ -72,6 +74,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private tagService = inject(TagService);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
   private hls: Hls | null = null;
   private videoId: string = '';
@@ -697,6 +700,12 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     navigator.clipboard.writeText(shareUrl).then(
       () => {
         console.log('Share URL copied to clipboard:', shareUrl);
+        this.snackBar.open('共有リンクをコピーしました！', '閉じる', {
+          duration: 3000,
+          horizontalPosition: 'left',
+          verticalPosition: 'bottom',
+          
+        });
       },
       (err) => {
         console.error('Failed to copy share URL:', err);

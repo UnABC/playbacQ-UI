@@ -6,7 +6,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { VideoService } from '../../core/services/video.service';
+import { CommentService } from '../../core/services/comment.service';
 import { Video } from '../../core/models/video.model';
+import { Comment } from '../../core/models/video.model';
 
 @Component({
   selector: 'app-video-list',
@@ -24,6 +26,7 @@ import { Video } from '../../core/models/video.model';
 })
 export class VideoListComponent implements OnInit {
   private videoService = inject(VideoService);
+  private commentService = inject(CommentService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -31,6 +34,7 @@ export class VideoListComponent implements OnInit {
   videoList: Video[] = [];
   currentSort = 'created_at';
   currentOrder: number = 0;
+  commentCounts: { [videoId: string]: number } = {};
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
@@ -47,6 +51,13 @@ export class VideoListComponent implements OnInit {
         .subscribe((videos) => {
           this.videoList = videos;
           this.cdr.detectChanges();
+
+          videos.forEach((video) => {
+            this.commentService.getComments(video.video_id).subscribe((comments: Comment[]) => {
+              this.commentCounts[video.video_id] = comments.length;
+              this.cdr.detectChanges();
+            });
+          });
         });
     });
   }
@@ -65,6 +76,10 @@ export class VideoListComponent implements OnInit {
       queryParams: { sortby: this.currentSort, order: value },
       queryParamsHandling: 'merge',
     });
+  }
+
+  commentCount(video: Video): number {
+    return this.commentCounts[video.video_id] || 0;
   }
 
   formatDuration(seconds: number | undefined): string {

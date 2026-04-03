@@ -32,15 +32,20 @@
 
 				<div class="video-metadata">
 					<span class="views" style="display: flex; align-items: center; gap: 4px;">
-						<span class="material-icons">
+						<mat-icon>
 							visibility
-						</span>
-						{{ video.view_count }}回
+						</mat-icon>
+						{{ video.view_count }}
+						<mat-icon style="transform:translateY(2px)">
+							comment
+						</mat-icon>
+						{{ commentCount(video) }}
 					</span>
 					<span class="date" style="display: flex; align-items: center; gap: 4px;">
-						<span class="material-icons">
+						<mat-icon>
 							upload
-						</span> {{ video.created_at | date:'yyyy/MM/dd' }}
+						</mat-icon>
+						{{ video.created_at | date:'yyyy/MM/dd' }}
 					</span>
 				</div>
 			</mat-card-content>

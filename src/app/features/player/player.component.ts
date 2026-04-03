@@ -101,17 +101,29 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     this.route.paramMap.subscribe((params) => {
       this.videoId = params.get('id') as string;
       this.isEmbed = this.route.snapshot.data['embed'] ?? false;
-      this.videoService.getVideoById(this.videoId).subscribe((video) => {
-        this.videoMetadata = video;
-        this.createdAtUtc = this.parseUtcDate(video.created_at);
-      });
-      this.initPlayer();
-      this.commentService.getComments(this.videoId).subscribe((comments) => {
-        comments.map((c) => {
-          this.comments.push(new Comment(c.comment, c.timestamp, c.command));
+      if (!this.isEmbed) {
+        this.videoService.getVideoById(this.videoId).subscribe((video) => {
+          this.videoMetadata = video;
+          this.createdAtUtc = this.parseUtcDate(video.created_at);
         });
-        this.decideYPosition();
-      });
+      }
+      this.initPlayer();
+      if (this.isEmbed) {
+        const token = this.route.snapshot.queryParamMap.get('token') ?? '';
+        this.commentService.getEmbedComments(this.videoId, token).subscribe((comments) => {
+          comments.map((c) => {
+            this.comments.push(new Comment(c.comment, c.timestamp, c.command));
+          });
+          this.decideYPosition();
+        });
+      } else {
+        this.commentService.getComments(this.videoId).subscribe((comments) => {
+          comments.map((c) => {
+            this.comments.push(new Comment(c.comment, c.timestamp, c.command));
+          });
+          this.decideYPosition();
+        });
+      }
 
       this.startCommentLoop();
       this.commentService.connect(this.videoId);
@@ -141,15 +153,17 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         });
     });
 
-    // いいねの状態を取得
-    this.videoService.getLikes(this.videoId).subscribe((likes) => {
-      this.authService.getUserID().subscribe((userId) => {
-        this.userId = userId?.userId ?? null;
-        this.isLiked = likes.includes(this.userId ?? '');
-        this.likeCount = likes.length;
-        this.cdr.detectChanges();
+    if (!this.isEmbed) {
+      // いいねの状態を取得
+      this.videoService.getLikes(this.videoId).subscribe((likes) => {
+        this.authService.getUserID().subscribe((userId) => {
+          this.userId = userId?.userId ?? null;
+          this.isLiked = likes.includes(this.userId ?? '');
+          this.likeCount = likes.length;
+          this.cdr.detectChanges();
+        });
       });
-    });
+    }
   }
 
   isVideoOwner(): boolean {
@@ -197,7 +211,10 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   initPlayer(): void {
     const video: HTMLVideoElement = this.videoRef.nativeElement;
-    const manifestUrl = `${environment.apiUrl}/api/videos/${this.videoId}/play`;
+    const token = this.route.snapshot.queryParamMap.get('token') ?? '';
+    const manifestUrl = this.isEmbed
+      ? `${environment.apiUrl}/embed/${this.videoId}?token=${token}`
+      : `${environment.apiUrl}/api/videos/${this.videoId}/play`;
 
     // Apple系以外のブラウザではHLS.jsを使用して動画を再生
     if (Hls.isSupported()) {
@@ -350,20 +367,22 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         this.updateTags();
         this.cdr.detectChanges();
       });
-      this.player.on('playing', () => {
-        if (!this.hasCountedView) {
-          // 再生が始まったら10秒後にカウントAPIを叩くタイマーをセット！
-          this.viewTimer = setTimeout(() => {
-            this.videoService.incrementViewCount(this.videoId).subscribe(() => {
-              console.log('View count incremented for video ID:', this.videoId);
-              this.hasCountedView = true;
-            });
-          }, countViewTime);
-        }
-      });
+      if (!this.isEmbed) {
+        this.player.on('playing', () => {
+          if (!this.hasCountedView) {
+            // 再生が始まったら10秒後にカウントAPIを叩くタイマーをセット！
+            this.viewTimer = setTimeout(() => {
+              this.videoService.incrementViewCount(this.videoId).subscribe(() => {
+                console.log('View count incremented for video ID:', this.videoId);
+                this.hasCountedView = true;
+              });
+            }, countViewTime);
+          }
+        });
 
-      // シーク（飛ばし）を検知したらタイマーを潰す
-      this.player.on('seeking', () => clearTimeout(this.viewTimer));
+        // シーク（飛ばし）を検知したらタイマーを潰す
+        this.player.on('seeking', () => clearTimeout(this.viewTimer));
+      }
     }
   }
 
@@ -671,6 +690,19 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         alert('タグの削除に失敗しました。');
       },
     });
+  }
+
+  copyShareUrl(): void {
+    const shareUrl = `${window.location.origin}/share/${this.videoId}`;
+    navigator.clipboard.writeText(shareUrl).then(
+      () => {
+        console.log('Share URL copied to clipboard:', shareUrl);
+      },
+      (err) => {
+        console.error('Failed to copy share URL:', err);
+        alert('共有リンクのコピーに失敗しました。');
+      },
+    );
   }
 
   ngOnDestroy(): void {

@@ -538,3 +538,40 @@
 .like-btn.liked .like-count {
   color: #e91e63;
 }
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border: 1px solid #e0e0e0;
+  color: #666;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 20px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.share-btn:hover {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+  color: #2196f3;
+}
+
+.share-btn mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.share-btn:active mat-icon {
+  transform: scale(0.8);
+}
+
+.share-text {
+  font-size: 1rem;
+  font-weight: bold;
+  transform: translateY(-1px);
+}

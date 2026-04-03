@@ -57,6 +57,11 @@
       <span class="like-text">いいね！</span>
       <span class="like-count" *ngIf="likeCount > 0">{{ likeCount }}</span>
     </button>
+    <button class="share-btn" (click)="copyShareUrl()" title="動画を共有">
+      <mat-icon>share</mat-icon>
+      <span class="share-text">traQで共有</span>
+    </button>
+
     <div class="more-menu-wrapper" *ngIf="isVideoOwner()" #moreMenuWrapper>
       <button class="more-options-btn" (click)="toggleMoreMenu()" title="その他のオプション">
         <mat-icon>more_vert</mat-icon>

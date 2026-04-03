@@ -67,7 +67,7 @@ describe('CommentService', () => {
     });
 
     const req = httpTestingController.expectOne(
-      `${environment.apiUrl}/api/embed/video123/comments?token=token123`,
+      `${environment.apiUrl}/unauthApi/embed/video123/comments?token=token123`,
     );
     expect(req.request.method).toBe('GET');
     req.flush(mockComments);

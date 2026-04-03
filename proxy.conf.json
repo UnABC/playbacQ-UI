@@ -6,13 +6,5 @@
     "headers": {
       "X-Forwarded-User": "traP"
     }
-  },
-  "/embed": {
-    "target": "http://host.docker.internal:8080",
-    "secure": false,
-    "changeOrigin": true,
-    "headers": {
-      "X-Forwarded-User": "traP"
-    }
   }
 }

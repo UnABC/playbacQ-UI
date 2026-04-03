@@ -213,7 +213,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     const video: HTMLVideoElement = this.videoRef.nativeElement;
     const token = this.route.snapshot.queryParamMap.get('token') ?? '';
     const manifestUrl = this.isEmbed
-      ? `${environment.apiUrl}/embed/${this.videoId}?token=${token}`
+      ? `${environment.apiUrl}/api/embed/${this.videoId}?token=${token}`
       : `${environment.apiUrl}/api/videos/${this.videoId}/play`;
 
     // Apple系以外のブラウザではHLS.jsを使用して動画を再生

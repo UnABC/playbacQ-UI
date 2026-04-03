@@ -50,7 +50,7 @@ export class CommentService {
 
   getEmbedComments(videoId: string, token: string): Observable<Comment[]> {
     return this.http.get<Comment[]>(
-      `${environment.apiUrl}/embed/${videoId}/comments?token=${token}`,
+      `${environment.apiUrl}/api/embed/${videoId}/comments?token=${token}`,
     );
   }
 

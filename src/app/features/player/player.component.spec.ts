@@ -5,6 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlayerComponent } from './player.component';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { TagService } from '../../core/services/tag.service';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
@@ -69,6 +70,8 @@ describe('PlayerComponent', () => {
       editVideo: vi.fn().mockReturnValue(of({} as any)),
       getVideoTags: vi.fn().mockReturnValue(of([])),
       getLikes: vi.fn().mockReturnValue(of([])),
+      addLike: vi.fn().mockReturnValue(of({} as any)),
+      removeLike: vi.fn().mockReturnValue(of({} as any)),
     };
     const mockCommentService = {
       postComment: vi.fn().mockReturnValue(of({})),
@@ -80,11 +83,14 @@ describe('PlayerComponent', () => {
     const mockMatDialog = {
       open: vi.fn(),
     };
+    const mockSnackBar = {
+      open: vi.fn(),
+    };
     const mockActivatedRoute = {
       paramMap: of({ get: (key: string) => (key === 'id' ? 'ABCD1234' : null) }),
       snapshot: {
         data: {},
-        queryParamMap: { get: (key: string) => null }
+        queryParamMap: { get: (key: string) => null },
       },
     };
     await TestBed.configureTestingModule({
@@ -97,6 +103,7 @@ describe('PlayerComponent', () => {
         { provide: VideoService, useValue: mockVideoService },
         { provide: CommentService, useValue: mockCommentService },
         { provide: MatDialog, useValue: mockMatDialog },
+        { provide: MatSnackBar, useValue: mockSnackBar },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
     }).compileComponents();
@@ -548,6 +555,68 @@ describe('PlayerComponent', () => {
     component.removeTag(mockTag);
     expect(confirmTagSpy).toHaveBeenCalledWith('タグ test を削除しますか？');
     expect(deleteVideoTagSpy).not.toHaveBeenCalled();
+  });
+  // 共有リンクコピーテスト
+  it('should copy share link to clipboard', async () => {
+    const mockClipboard = {
+      writeText: vi.fn().mockResolvedValue(undefined),
+    };
+    Object.defineProperty(navigator, 'clipboard', {
+      value: mockClipboard,
+      configurable: true,
+    });
+    const mockBarSpy = vi
+      .spyOn((component as any).snackBar, 'open')
+      .mockImplementation(() => null as any);
+    component.copyShareUrl();
+    await Promise.resolve();
+    expect(mockClipboard.writeText).toHaveBeenCalledWith(
+      `${window.location.origin}/share/ABCD1234`,
+    );
+    expect(mockBarSpy).toHaveBeenCalled();
+  });
+  it('should alert when failed to copy share link', async () => {
+    const mockClipboard = {
+      writeText: vi.fn().mockRejectedValue(new Error('Failed to copy')),
+    };
+    Object.defineProperty(navigator, 'clipboard', {
+      value: mockClipboard,
+      configurable: true,
+    });
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    await component.copyShareUrl();
+    expect(mockClipboard.writeText).toHaveBeenCalledWith(
+      `${window.location.origin}/share/ABCD1234`,
+    );
+    expect(alertSpy).toHaveBeenCalledWith('共有リンクのコピーに失敗しました。');
+  });
+  // いいねテスト
+  it('should toggle like', () => {
+    const addLikeSpy = vi.spyOn(videoService, 'addLike').mockReturnValue(of({} as any));
+    const removeLikeSpy = vi.spyOn(videoService, 'removeLike').mockReturnValue(of({} as any));
+    component.isLiked = false;
+    component.toggleLike();
+    expect(addLikeSpy).toHaveBeenCalledWith('ABCD1234');
+    component.isLiked = true;
+    component.toggleLike();
+    expect(removeLikeSpy).toHaveBeenCalledWith('ABCD1234');
+  });
+  it('should alert when failed to toggle like', () => {
+    const addLikeSpy = vi
+      .spyOn(videoService, 'addLike')
+      .mockReturnValue(throwError(() => new Error('Failed to add like')));
+    const removeLikeSpy = vi
+      .spyOn(videoService, 'removeLike')
+      .mockReturnValue(throwError(() => new Error('Failed to remove like')));
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    component.isLiked = false;
+    component.toggleLike();
+    expect(addLikeSpy).toHaveBeenCalledWith('ABCD1234');
+    expect(alertSpy).toHaveBeenCalledWith('いいねの追加に失敗しました。');
+    component.isLiked = true;
+    component.toggleLike();
+    expect(removeLikeSpy).toHaveBeenCalledWith('ABCD1234');
+    expect(alertSpy).toHaveBeenCalledWith('いいねの削除に失敗しました。');
   });
   // コメント入力テスト
   it('should update command selection', () => {

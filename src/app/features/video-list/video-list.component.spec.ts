@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { VideoListComponent } from './video-list.component';
 import { VideoService } from '../../core/services/video.service';
+import { CommentService } from '../../core/services/comment.service';
 import { of, BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
@@ -14,9 +15,13 @@ describe('VideoListComponent', () => {
   let component: VideoListComponent;
   let fixture: ComponentFixture<VideoListComponent>;
   let videoService: VideoService;
+  let commentService: CommentService;
   beforeEach(async () => {
     const mockVideoService = {
       getVideos: vi.fn().mockReturnValue(of([])),
+    };
+    const mockCommentService = {
+      getComments: vi.fn().mockReturnValue(of({})),
     };
     await TestBed.configureTestingModule({
       imports: [VideoListComponent],
@@ -25,6 +30,7 @@ describe('VideoListComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: VideoService, useValue: mockVideoService },
+        { provide: CommentService, useValue: mockCommentService },
         {
           provide: ActivatedRoute,
           useValue: { queryParams: queryParamsSubject.asObservable() },
@@ -35,6 +41,7 @@ describe('VideoListComponent', () => {
     fixture = TestBed.createComponent(VideoListComponent);
     component = fixture.componentInstance;
     videoService = TestBed.inject(VideoService);
+    commentService = TestBed.inject(CommentService);
     fixture.detectChanges();
   });
 
@@ -97,7 +104,13 @@ describe('VideoListComponent', () => {
       { id: 1, title: 'Video 1', duration: 120 },
       { id: 2, title: 'Video 2', duration: 240 },
     ] as any;
+    const mockComments = [
+      { video_id: 1, content: 'Comment 1' },
+      { video_id: 1, content: 'Comment 2' },
+      { video_id: 1, content: 'Comment 3' },
+    ] as any[];
     vi.spyOn(videoService, 'getVideos').mockReturnValue(of(mockVideos));
+    vi.spyOn(commentService, 'getComments').mockReturnValue(of(mockComments));
     queryParamsSubject.next({});
     expect(component.videoList).toEqual(mockVideos);
     fixture.detectChanges();
@@ -107,6 +120,7 @@ describe('VideoListComponent', () => {
     expect(videoCards[0].nativeElement.textContent).toContain('2:00');
     expect(videoCards[1].nativeElement.textContent).toContain('Video 2');
     expect(videoCards[1].nativeElement.textContent).toContain('4:00');
+    expect(component.commentCount(mockVideos[0])).toBe(3);
   });
   it('should return message when videoList is empty', () => {
     component.videoList = [];

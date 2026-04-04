@@ -226,7 +226,13 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       this.hls.attachMedia(video);
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        this.initPlyr(video);
+        video.addEventListener(
+          'loadedmetadata',
+          () => {
+            this.initPlyr(video);
+          },
+          { once: true },
+        );
       });
 
       this.hls.on(Hls.Events.ERROR, (event: Events.ERROR, data: ErrorData) => {
@@ -316,7 +322,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         'settings',
         'fullscreen',
       ],
-      settings: ['quality', 'speed', 'loop'],
+      settings: ['quality', 'speed'],
       keyboard: { focused: true, global: true },
       tooltips: { controls: true, seek: true },
       storage: { enabled: true, key: 'playbacq-plyr' },
@@ -365,6 +371,30 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
               : '<span class="material-icons" style="font-size: 18px;">speaker_notes_off</span>';
           });
           settingBtn.parentNode?.insertBefore(toggleBtn, settingBtn.nextSibling);
+
+          const loopToggleBtn = document.createElement('button');
+          loopToggleBtn.type = 'button';
+          loopToggleBtn.className = 'plyr__control';
+          loopToggleBtn.title = 'ループ再生のON/OFF';
+          loopToggleBtn.style.display = 'flex';
+          loopToggleBtn.style.alignItems = 'center';
+          loopToggleBtn.style.justifyContent = 'center';
+
+          const updateLoopIcon = () => {
+            if (this.player) {
+              loopToggleBtn.innerHTML = this.player.loop
+                ? '<span class="material-icons" style="font-size: 18px; color: var(--plyr-color-main, #00ffa3);">repeat</span>'
+                : '<span class="material-icons" style="font-size: 18px; opacity: 0.6;">repeat</span>';
+            }
+          };
+          updateLoopIcon();
+          loopToggleBtn.addEventListener('click', () => {
+            if (this.player) {
+              this.player.loop = !this.player.loop;
+              updateLoopIcon();
+            }
+          });
+          settingBtn.parentNode?.insertBefore(loopToggleBtn, toggleBtn.nextSibling);
         }
 
         this.isLoading = false;

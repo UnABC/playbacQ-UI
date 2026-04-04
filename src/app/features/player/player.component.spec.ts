@@ -78,6 +78,7 @@ describe('PlayerComponent', () => {
       connect: vi.fn().mockReturnValue(of({} as any)),
       disconnect: vi.fn(),
       getComments: vi.fn().mockReturnValue(of([])),
+      getEmbedComments: vi.fn().mockReturnValue(of([])),
       messages$: messagesSubject.asObservable(),
     };
     const mockMatDialog = {
@@ -135,11 +136,15 @@ describe('PlayerComponent', () => {
   // Hls.jsの初期化テスト
   it('should initialize Hls.js when supported', async () => {
     vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+    const video = component.videoRef.nativeElement;
     const loadSourceSpy = vi.spyOn(Hls.prototype, 'loadSource').mockImplementation(() => {});
     const attachMediaSpy = vi.spyOn(Hls.prototype, 'attachMedia').mockImplementation(() => {});
     const onSpy = vi.spyOn(Hls.prototype, 'on').mockImplementation(() => {});
+    const addEventListenerSpy = vi.spyOn(video, 'addEventListener').mockImplementation(() => {});
     const initPlyrSpy = vi.spyOn(component as any, 'initPlyr').mockImplementation(() => {});
+
     (component as any).initPlayer();
+
     expect(Hls.isSupported).toHaveBeenCalled();
     expect(loadSourceSpy).toHaveBeenCalledWith(`${environment.apiUrl}/api/videos/ABCD1234/play`);
     expect(attachMediaSpy).toHaveBeenCalledWith((component as any).videoRef.nativeElement);
@@ -152,6 +157,19 @@ describe('PlayerComponent', () => {
     if (ourCall && ourCall[1]) {
       (ourCall[1] as Function).call(component, Hls.Events.MANIFEST_PARSED, {});
     }
+
+    expect(addEventListenerSpy).toHaveBeenCalledWith('loadedmetadata', expect.any(Function), {
+      once: true,
+    });
+
+    const loadedMetadataCalls = addEventListenerSpy.mock.calls.filter(
+      (call) => call[0] === 'loadedmetadata',
+    );
+    const loadedmetadataCallback = loadedMetadataCalls[
+      loadedMetadataCalls.length - 1
+    ][1] as Function;
+    loadedmetadataCallback();
+
     expect(initPlyrSpy).toHaveBeenCalled();
   });
 
@@ -730,6 +748,35 @@ describe('PlayerComponent', () => {
     const decideYPositionSpy = vi.spyOn(component, 'decideYPosition').mockImplementation(() => {});
     component.ngOnInit();
     expect(getCommentsSpy).toHaveBeenCalledWith('ABCD1234');
+    const comments = component['comments'];
+    expect(comments.length).toBe(2);
+    expect(comments[0]).toBeInstanceOf(Comment);
+    expect(comments[0].timestamp).toBe(1500);
+    expect((comments[0] as any).text).toBe('テスト');
+    expect(comments[1]).toBeInstanceOf(Comment);
+    expect(comments[1].timestamp).toBe(2000);
+    expect((comments[1] as any).text).toBe('test');
+    expect(decideYPositionSpy).toHaveBeenCalledTimes(1);
+  });
+  it('getEmbedComments test', () => {
+    const mockApiResponse = [
+      { comment: 'テスト', timestamp: 1500, command: 'shita red' },
+      { comment: 'test', timestamp: 2000, command: 'big' },
+    ];
+    vi.spyOn(component, 'initPlayer').mockImplementation(() => {});
+    vi.spyOn(component, 'startCommentLoop').mockImplementation(() => {});
+    const getEmbedCommentsSpy = vi
+      .spyOn(commentService, 'getEmbedComments')
+      .mockReturnValue(of(mockApiResponse as any));
+    vi.spyOn(component['route'], 'snapshot', 'get').mockReturnValue({
+      data: { embed: true },
+      queryParamMap: {
+        get: (key: string) => (key === 'token' ? 'hogehoge' : null),
+      },
+    } as any);
+    const decideYPositionSpy = vi.spyOn(component, 'decideYPosition').mockImplementation(() => {});
+    component.ngOnInit();
+    expect(getEmbedCommentsSpy).toHaveBeenCalledWith('ABCD1234', 'hogehoge');
     const comments = component['comments'];
     expect(comments.length).toBe(2);
     expect(comments[0]).toBeInstanceOf(Comment);

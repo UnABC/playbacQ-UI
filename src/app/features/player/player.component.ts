@@ -304,6 +304,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   initPlyr(video: HTMLVideoElement): void {
+    const token = this.route.snapshot.queryParamMap.get('token') ?? '';
     this.player = new Plyr(video, {
       controls: [
         'play-large',
@@ -322,7 +323,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 1.75, 2, 3] },
       previewThumbnails: {
         enabled: true,
-        src: `${environment.apiUrl}/${this.isEmbed ? 'unauthApi/embed' : 'api/videos'}/${this.videoId}/vtt`,
+        src: `${environment.apiUrl}/${this.isEmbed ? 'unauthApi/embed' : 'api/videos'}/${this.videoId}/vtt?token=${token}`,
       },
     });
 

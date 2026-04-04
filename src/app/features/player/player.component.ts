@@ -322,7 +322,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 1.75, 2, 3] },
       previewThumbnails: {
         enabled: true,
-        src: `${environment.apiUrl}/api/videos/${this.videoId}/vtt`,
+        src: `${environment.apiUrl}/${this.isEmbed ? 'unauthApi/embed' : 'api/videos'}/${this.videoId}/vtt`,
       },
     });
 
@@ -704,7 +704,6 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
           duration: 3000,
           horizontalPosition: 'left',
           verticalPosition: 'bottom',
-          
         });
       },
       (err) => {

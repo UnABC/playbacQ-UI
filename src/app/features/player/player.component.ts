@@ -28,6 +28,7 @@ import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TagService } from '../../core/services/tag.service';
+import { UserService } from '../../core/services/user.service';
 import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
 import { environment } from '../../../environments/environment';
@@ -72,6 +73,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private videoService = inject(VideoService);
   private commentService = inject(CommentService);
   private tagService = inject(TagService);
+  private userService = inject(UserService);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
@@ -99,6 +101,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   isMoreMenuOpen = false;
   isLiked = false;
   likeCount = 0;
+  userIconUrl: string | null = null;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -108,6 +111,12 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         this.videoService.getVideoById(this.videoId).subscribe((video) => {
           this.videoMetadata = video;
           this.createdAtUtc = this.parseUtcDate(video.created_at);
+          this.userService
+            .getUserIcon(this.videoMetadata?.user_id ?? '')
+            .subscribe((icon: Blob) => {
+              this.userIconUrl = URL.createObjectURL(icon);
+              this.cdr.detectChanges();
+            });
         });
       }
       this.initPlayer();

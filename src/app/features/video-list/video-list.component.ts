@@ -51,6 +51,7 @@ export class VideoListComponent implements OnInit {
           sortby: this.currentSort,
           order: this.currentOrder,
           ...(params['tag'] && { tag: params['tag'] }),
+          ...(params['userId'] && { userId: params['userId'] }),
         })
         .subscribe((videos) => {
           this.videoList = videos;

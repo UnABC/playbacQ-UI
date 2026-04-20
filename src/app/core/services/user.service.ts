@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class UserService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://q.trap.jp/api/v3/public/icons/';
+  private apiUrl = 'https://q.trap.jp/api/v3/public/icon/';
 
   getUserIcon(userId: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}${userId}`, { responseType: 'blob' });

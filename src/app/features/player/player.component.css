@@ -212,7 +212,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s, transform 0.2s;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
 }
 
 .command-toggle-btn:hover {
@@ -220,7 +222,7 @@
 }
 
 /* コマンドメニューの開閉時のアニメーション */
-.command-menu.open~.command-toggle-btn,
+.command-menu.open ~ .command-toggle-btn,
 .command-toggle-btn:active {
   transform: scale(0.8);
 }
@@ -232,7 +234,9 @@
   opacity: 0;
   overflow: visible;
   /* ★パレットがはみ出すので visible に変更 */
-  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in;
+  transition:
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease-in;
 }
 
 .command-menu.open {
@@ -336,7 +340,11 @@
   opacity: 0;
   pointer-events: none;
   /* アニメーションの対象に max-width と margin-left を追加 */
-  transition: max-width 0.2s ease, margin-left 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+  transition:
+    max-width 0.2s ease,
+    margin-left 0.2s ease,
+    opacity 0.2s ease,
+    color 0.2s ease;
   color: #999;
 }
 
@@ -372,7 +380,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .more-options-btn:hover {
@@ -476,7 +486,9 @@
   cursor: pointer;
   padding: 8px 12px;
   border-radius: 20px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .like-btn:hover {
@@ -550,7 +562,9 @@
   cursor: pointer;
   padding: 8px 12px;
   border-radius: 20px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .share-btn:hover {

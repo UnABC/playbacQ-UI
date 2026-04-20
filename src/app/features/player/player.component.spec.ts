@@ -9,6 +9,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TagService } from '../../core/services/tag.service';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
+import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../core/services/user.service';
 import { EditVideoDialogComponent } from './edit-video-dialog.component';
 import { Comment } from './comment';
 import { of, Subject, throwError } from 'rxjs';
@@ -47,6 +49,8 @@ describe('PlayerComponent', () => {
   let tagService: TagService;
   let videoService: VideoService;
   let commentService: CommentService;
+  let authService: AuthService;
+  let userService: UserService;
   let messagesSubject: Subject<any>;
   beforeEach(async () => {
     messagesSubject = new Subject<any>();
@@ -81,6 +85,13 @@ describe('PlayerComponent', () => {
       getEmbedComments: vi.fn().mockReturnValue(of([])),
       messages$: messagesSubject.asObservable(),
     };
+    const mockAuthService = {
+      isLoggedIn: vi.fn().mockReturnValue(true),
+      getUserID: vi.fn().mockReturnValue(of('user')),
+    };
+    const mockUserService = {
+      getUserIcon: vi.fn().mockReturnValue(of(new Blob())),
+    };
     const mockMatDialog = {
       open: vi.fn(),
     };
@@ -106,6 +117,8 @@ describe('PlayerComponent', () => {
         { provide: MatDialog, useValue: mockMatDialog },
         { provide: MatSnackBar, useValue: mockSnackBar },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: UserService, useValue: mockUserService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 
@@ -113,6 +126,9 @@ describe('PlayerComponent', () => {
     component = fixture.componentInstance;
     videoService = TestBed.inject(VideoService);
     commentService = TestBed.inject(CommentService);
+    userService = TestBed.inject(UserService);
+    authService = TestBed.inject(AuthService);
+
     component.videoMetadata = {
       video_id: 'ABCD1234',
       title: 'Test Video',

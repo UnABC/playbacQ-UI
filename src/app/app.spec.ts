@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { Router, provideRouter, NavigationEnd } from '@angular/router';
+import { AuthService } from './core/services/auth.service';
+import { UserService } from './core/services/user.service';
 import { App } from './app';
 import { vi } from 'vitest';
 import { of } from 'rxjs';
@@ -8,14 +10,28 @@ import { By } from '@angular/platform-browser';
 describe('App', () => {
   let fixture: ComponentFixture<App>;
   let app: App;
+  let authService: AuthService;
+  let userService: UserService;
 
   beforeEach(async () => {
+    const mockAuthService = {
+      getUserID: vi.fn().mockReturnValue(of({ userId: 'test-user-id' })),
+    };
+    const mockUserService = {
+      getUserIcon: vi.fn().mockReturnValue(of(new Blob())),
+    };
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: UserService, useValue: mockUserService },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(App);
     app = fixture.componentInstance;
+    authService = TestBed.inject(AuthService);
+    userService = TestBed.inject(UserService);
     vi.useFakeTimers();
     fixture.detectChanges();
   });
@@ -67,6 +83,56 @@ describe('App', () => {
     expect(alertSpy).toHaveBeenCalledWith(
       'あり得ないことが起きています。HTMLを改竄していませんか？',
     );
+  });
+  // 初期化関連のテスト
+  it('should check if user is authenticated on init and load user icon when the URL is not embedded', () => {
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    const getUserIDSpy = vi
+      .spyOn(authService, 'getUserID')
+      .mockReturnValue(of({ userId: 'test-user-id' }));
+    const getUserIconSpy = vi.spyOn(userService, 'getUserIcon').mockReturnValue(of(new Blob()));
+    const router = TestBed.inject(Router);
+
+    createObjectURLSpy.mockClear();
+    getUserIDSpy.mockClear();
+    getUserIconSpy.mockClear();
+
+    (router.events as any).next(new NavigationEnd(1, '/home', '/home'));
+    fixture.detectChanges();
+    expect(app.isEmbed).toBe(false);
+    expect(getUserIDSpy).toHaveBeenCalled();
+    expect(getUserIconSpy).toHaveBeenCalledWith('test-user-id');
+    expect(createObjectURLSpy).toHaveBeenCalled();
+    expect(app.iconUrl).toBe('blob:mock-url');
+  });
+  it('should set isEmbed to true when navigated to an embedded URL', () => {
+    const getUserIDSpy = vi
+      .spyOn(authService, 'getUserID')
+      .mockReturnValue(of({ userId: 'test-user-id' }));
+    const router = TestBed.inject(Router);
+
+    getUserIDSpy.mockClear();
+
+    (router.events as any).next(new NavigationEnd(1, '/embed/video123', '/embed/video123'));
+    expect(app.isEmbed).toBe(true);
+    expect(getUserIDSpy).not.toHaveBeenCalled();
+  });
+  it('should not set user icon when failed to fetch user ID', () => {
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    const getUserIDSpy = vi.spyOn(authService, 'getUserID').mockReturnValue(of(null));
+    const getUserIconSpy = vi.spyOn(userService, 'getUserIcon').mockReturnValue(of(new Blob()));
+
+    createObjectURLSpy.mockClear();
+    getUserIDSpy.mockClear();
+    getUserIconSpy.mockClear();
+
+    const router = TestBed.inject(Router);
+    (router.events as any).next(new NavigationEnd(1, '/home', '/home'));
+    fixture.detectChanges();
+    expect(getUserIDSpy).toHaveBeenCalled();
+    expect(getUserIconSpy).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
+    expect(app.iconUrl).toBeNull();
   });
   // DOMのテスト
   it('should have search input and upload button', () => {

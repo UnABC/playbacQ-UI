@@ -1,9 +1,11 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, ChangeDetectorRef } from '@angular/core';
 import { UploadComponent } from './features/upload/upload.component';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AuthService } from './core/services/auth.service';
+import { UserService } from './core/services/user.service';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -16,14 +18,28 @@ import { filter } from 'rxjs/operators';
 export class App {
   protected readonly title = signal('playbacQ');
   dialog = inject(MatDialog);
+  authService = inject(AuthService);
+  userService = inject(UserService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   isEmbed = false;
+  iconUrl: string | null = null;
 
   constructor() {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         this.isEmbed = event.urlAfterRedirects.startsWith('/embed');
+        if (!this.isEmbed) {
+          this.authService.getUserID().subscribe((res) => {
+            if (res && res.userId) {
+              this.userService.getUserIcon(res.userId).subscribe((iconBlob) => {
+                this.iconUrl = URL.createObjectURL(iconBlob);
+                this.cdr.detectChanges();
+              });
+            }
+          });
+        }
       });
   }
 

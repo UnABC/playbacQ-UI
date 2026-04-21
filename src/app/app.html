@@ -10,9 +10,14 @@
 				<mat-icon>search</mat-icon>
 			</button>
 		</div>
-		<button mat-flat-button color="primary" (click)="openUploadDialog()">
-			<mat-icon>upload</mat-icon> 動画を投稿
-		</button>
+		<span style="display:flex; align-items: center; gap: 16px;">
+			<button mat-flat-button color="primary" (click)="openUploadDialog()">
+				<mat-icon>upload</mat-icon> 動画を投稿
+			</button>
+			@if (iconUrl) {
+			<img [src]="iconUrl" alt="User Icon" class="user-icon" [routerLink]="['/mypage']">
+			}
+		</span>
 	</div>
 	}
 	<router-outlet></router-outlet>

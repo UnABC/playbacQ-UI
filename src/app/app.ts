@@ -1,4 +1,12 @@
-import { Component, signal, inject, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  ChangeDetectorRef,
+  ViewChild,
+  ElementRef,
+  HostListener,
+} from '@angular/core';
 import { UploadComponent } from './features/upload/upload.component';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -7,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from './core/services/auth.service';
 import { UserService } from './core/services/user.service';
 import { filter } from 'rxjs/operators';
+import { log } from 'node:console';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +25,8 @@ import { filter } from 'rxjs/operators';
   styleUrl: './app.css',
 })
 export class App {
+  @ViewChild('userMenuWrapper') userMenuWrapperRef!: ElementRef<HTMLDivElement>;
+
   protected readonly title = signal('playbacQ');
   dialog = inject(MatDialog);
   authService = inject(AuthService);
@@ -24,6 +35,8 @@ export class App {
   private cdr = inject(ChangeDetectorRef);
   isEmbed = false;
   iconUrl: string | null = null;
+  isOpenUserMenu = false;
+  loggedInUserId: string | null = null;
 
   constructor() {
     this.router.events
@@ -32,6 +45,7 @@ export class App {
         this.isEmbed = event.urlAfterRedirects.startsWith('/embed');
         if (!this.isEmbed) {
           this.authService.getUserID().subscribe((res) => {
+            this.loggedInUserId = res ? res.userId : null;
             if (res && res.userId) {
               this.userService.getUserIcon(res.userId).subscribe((iconBlob) => {
                 this.iconUrl = URL.createObjectURL(iconBlob);
@@ -56,6 +70,20 @@ export class App {
     dialogRef.afterClosed().subscribe(() => {
       this.router.navigate(['/'], { queryParams: { reload: new Date().getTime() } });
     });
+  }
+
+  toggleUserMenu() {
+    this.isOpenUserMenu = !this.isOpenUserMenu;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.isOpenUserMenu && this.userMenuWrapperRef) {
+      const clickedInside = this.userMenuWrapperRef.nativeElement.contains(event.target as Node);
+      if (!clickedInside) {
+        this.isOpenUserMenu = false;
+      }
+    }
   }
 
   onSearch(keyword: string) {

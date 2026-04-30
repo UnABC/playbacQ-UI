@@ -19,6 +19,9 @@
 				<img [src]="iconUrl" alt="User Icon" class="user-icon" (click)="toggleUserMenu()">
 				@if (isOpenUserMenu) {
 				<div class="user-menu">
+					<button mat-menu-item class="notifications-btn">
+						<mat-icon>notifications</mat-icon> 通知
+					</button>
 					<button mat-menu-item class="uploaded-videos-btn" [routerLink]="['/']"
 						[queryParams]="{ userId: loggedInUserId }">
 						<mat-icon>video_library</mat-icon> 投稿した動画
@@ -26,9 +29,13 @@
 					<button mat-menu-item class="liked-videos-btn">
 						<mat-icon>favorite</mat-icon> いいねした動画
 					</button>
-					<button mat-menu-item class="version-info-btn">
-						<mat-icon>info</mat-icon> バージョン情報
+					<button mat-menu-item class="settings-btn">
+						<mat-icon>settings</mat-icon> 設定
 					</button>
+					<div class="version-info">
+						playbacQ<br>
+						ver 0.0.0
+					</div>
 				</div>
 				}
 			</div>

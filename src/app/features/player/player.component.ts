@@ -112,12 +112,13 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
           this.videoMetadata = video;
           this.createdAtUtc = this.parseUtcDate(video.created_at);
           if (this.videoMetadata?.user_id) {
-            this.userService
-              .getUserIcon(this.videoMetadata.user_id)
-              .subscribe((icon: Blob) => {
-                this.userIconUrl = URL.createObjectURL(icon);
-                this.cdr.detectChanges();
-              });
+            this.userService.getUserIcon(this.videoMetadata.user_id).subscribe((icon: Blob) => {
+              if (this.userIconUrl) {
+                URL.revokeObjectURL(this.userIconUrl);
+              }
+              this.userIconUrl = URL.createObjectURL(icon);
+              this.cdr.detectChanges();
+            });
           }
         });
       }

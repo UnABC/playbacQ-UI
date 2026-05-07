@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -25,7 +25,7 @@ import { Comment } from '../../core/models/video.model';
   templateUrl: './video-list.component.html',
   styleUrls: ['./video-list.component.css'],
 })
-export class VideoListComponent implements OnInit {
+export class VideoListComponent implements OnInit, OnDestroy {
   private videoService = inject(VideoService);
   private commentService = inject(CommentService);
   private userService = inject(UserService);

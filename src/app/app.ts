@@ -15,7 +15,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from './core/services/auth.service';
 import { UserService } from './core/services/user.service';
 import { filter } from 'rxjs/operators';
-import { log } from 'node:console';
 
 @Component({
   selector: 'app-root',

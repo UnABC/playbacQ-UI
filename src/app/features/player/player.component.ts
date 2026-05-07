@@ -111,12 +111,15 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         this.videoService.getVideoById(this.videoId).subscribe((video) => {
           this.videoMetadata = video;
           this.createdAtUtc = this.parseUtcDate(video.created_at);
-          this.userService
-            .getUserIcon(this.videoMetadata?.user_id ?? '')
-            .subscribe((icon: Blob) => {
+          if (this.videoMetadata?.user_id) {
+            this.userService.getUserIcon(this.videoMetadata.user_id).subscribe((icon: Blob) => {
+              if (this.userIconUrl) {
+                URL.revokeObjectURL(this.userIconUrl);
+              }
               this.userIconUrl = URL.createObjectURL(icon);
               this.cdr.detectChanges();
             });
+          }
         });
       }
       this.initPlayer();
@@ -762,6 +765,9 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
+    }
+    if (this.userIconUrl) {
+      URL.revokeObjectURL(this.userIconUrl);
     }
     this.commentService.disconnect();
   }

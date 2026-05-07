@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -10,7 +10,6 @@ import { CommentService } from '../../core/services/comment.service';
 import { UserService } from '../../core/services/user.service';
 import { Video } from '../../core/models/video.model';
 import { Comment } from '../../core/models/video.model';
-import { U } from '@angular/cdk/keycodes';
 
 @Component({
   selector: 'app-video-list',
@@ -26,7 +25,7 @@ import { U } from '@angular/cdk/keycodes';
   templateUrl: './video-list.component.html',
   styleUrls: ['./video-list.component.css'],
 })
-export class VideoListComponent implements OnInit {
+export class VideoListComponent implements OnInit, OnDestroy {
   private videoService = inject(VideoService);
   private commentService = inject(CommentService);
   private userService = inject(UserService);
@@ -59,10 +58,12 @@ export class VideoListComponent implements OnInit {
 
           videos.forEach((video) => {
             // ユーザーのアイコンを取得
-            this.userService.getUserIcon(video.user_id).subscribe((icon: Blob) => {
-              this.uploadUserIcons[video.user_id] = URL.createObjectURL(icon);
-              this.cdr.detectChanges();
-            });
+            if (!this.uploadUserIcons[video.user_id]) {
+              this.userService.getUserIcon(video.user_id).subscribe((icon: Blob) => {
+                this.uploadUserIcons[video.user_id] = URL.createObjectURL(icon);
+                this.cdr.detectChanges();
+              });
+            }
 
             this.commentService.getComments(video.video_id).subscribe((comments: Comment[]) => {
               this.commentCounts[video.video_id] = comments.length;
@@ -71,6 +72,11 @@ export class VideoListComponent implements OnInit {
           });
         });
     });
+  }
+
+  ngOnDestroy() {
+    // ユーザーアイコンのURLを解放
+    Object.values(this.uploadUserIcons).forEach((url) => URL.revokeObjectURL(url));
   }
 
   onSortChange(value: string) {

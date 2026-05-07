@@ -11,8 +11,9 @@
 			</button>
 		</div>
 		<span style="display:flex; align-items: center; gap: 16px;">
-			<button mat-flat-button color="primary" (click)="openUploadDialog()">
-				<mat-icon>upload</mat-icon> 動画を投稿
+			<button mat-flat-button class="upload-btn" color="primary" (click)="openUploadDialog()">
+				<mat-icon>upload</mat-icon>
+				<span class="upload-btn-text">動画を投稿</span>
 			</button>
 			@if (iconUrl) {
 			<div class="user-menu-wrapper" #userMenuWrapper>

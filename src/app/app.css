@@ -40,6 +40,29 @@
   background-color: #000;
 }
 
+.upload-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .upload-btn-text {
+    display: none;
+  }
+  .upload-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 0;
+    min-width: 48px;
+    width: 48px;
+  }
+  .upload-btn mat-icon {
+    margin: 0;
+  }
+}
+
 .user-icon {
   width: 48px;
   height: 48px;
@@ -67,7 +90,7 @@
 .user-menu {
   position: absolute;
   top: 120%;
-  left: 0;
+  right: 10%;
   margin-bottom: 12px;
   background-color: white;
   border-radius: 8px;

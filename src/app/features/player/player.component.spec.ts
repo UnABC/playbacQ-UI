@@ -88,7 +88,7 @@ describe('PlayerComponent', () => {
     };
     const mockAuthService = {
       isLoggedIn: vi.fn().mockReturnValue(true),
-      getUserID: vi.fn().mockReturnValue(of('user')),
+      getUserID: vi.fn().mockReturnValue(of({ userId: 'user' })),
     };
     const mockUserService = {
       getUserIcon: vi.fn().mockReturnValue(of(new Blob())),

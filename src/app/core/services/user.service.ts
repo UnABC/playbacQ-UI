@@ -10,6 +10,7 @@ export class UserService {
   private apiUrl = 'https://q.trap.jp/api/v3/public/icon/';
 
   getUserIcon(userId: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}${userId}`, { responseType: 'blob' });
+    const encodedUserId = encodeURIComponent(userId);
+    return this.http.get(`${this.apiUrl}${encodedUserId}`, { responseType: 'blob' });
   }
 }

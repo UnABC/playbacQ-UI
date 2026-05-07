@@ -5,6 +5,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { VideoListComponent } from './video-list.component';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
+import { UserService } from '../../core/services/user.service';
 import { of, BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
@@ -16,12 +17,16 @@ describe('VideoListComponent', () => {
   let fixture: ComponentFixture<VideoListComponent>;
   let videoService: VideoService;
   let commentService: CommentService;
+  let userService: UserService;
   beforeEach(async () => {
     const mockVideoService = {
       getVideos: vi.fn().mockReturnValue(of([])),
     };
     const mockCommentService = {
       getComments: vi.fn().mockReturnValue(of({})),
+    };
+    const mockUserService = {
+      getUserIcon: vi.fn().mockReturnValue(of(new Blob())),
     };
     await TestBed.configureTestingModule({
       imports: [VideoListComponent],
@@ -35,6 +40,7 @@ describe('VideoListComponent', () => {
           provide: ActivatedRoute,
           useValue: { queryParams: queryParamsSubject.asObservable() },
         },
+        { provide: UserService, useValue: mockUserService },
       ],
     }).compileComponents();
 
@@ -42,6 +48,7 @@ describe('VideoListComponent', () => {
     component = fixture.componentInstance;
     videoService = TestBed.inject(VideoService);
     commentService = TestBed.inject(CommentService);
+    userService = TestBed.inject(UserService);
     fixture.detectChanges();
   });
 
@@ -66,12 +73,14 @@ describe('VideoListComponent', () => {
       sortby: 'title',
       order: 1,
       tag: 'tag1',
+      userId: 'user1',
     });
     expect(getVideosSpy).toHaveBeenCalledWith({
       search: 'test',
       sortby: 'title',
       order: 1,
       tag: 'tag1',
+      userId: 'user1',
     });
   });
   // ソート変更のテスト

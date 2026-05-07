@@ -9,6 +9,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TagService } from '../../core/services/tag.service';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
+import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../core/services/user.service';
 import { EditVideoDialogComponent } from './edit-video-dialog.component';
 import { Comment } from './comment';
 import { of, Subject, throwError } from 'rxjs';
@@ -25,6 +27,7 @@ let mockReadyCallback: Function | null = null;
 
 vi.mock('plyr', () => {
   class MockPlyr {
+    loop = false;
     constructor() {}
     on(eventName: string, callback: Function) {
       if (eventName === 'playing') {
@@ -47,6 +50,8 @@ describe('PlayerComponent', () => {
   let tagService: TagService;
   let videoService: VideoService;
   let commentService: CommentService;
+  let authService: AuthService;
+  let userService: UserService;
   let messagesSubject: Subject<any>;
   beforeEach(async () => {
     messagesSubject = new Subject<any>();
@@ -81,6 +86,13 @@ describe('PlayerComponent', () => {
       getEmbedComments: vi.fn().mockReturnValue(of([])),
       messages$: messagesSubject.asObservable(),
     };
+    const mockAuthService = {
+      isLoggedIn: vi.fn().mockReturnValue(true),
+      getUserID: vi.fn().mockReturnValue(of('user')),
+    };
+    const mockUserService = {
+      getUserIcon: vi.fn().mockReturnValue(of(new Blob())),
+    };
     const mockMatDialog = {
       open: vi.fn(),
     };
@@ -106,6 +118,8 @@ describe('PlayerComponent', () => {
         { provide: MatDialog, useValue: mockMatDialog },
         { provide: MatSnackBar, useValue: mockSnackBar },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: UserService, useValue: mockUserService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 
@@ -113,6 +127,9 @@ describe('PlayerComponent', () => {
     component = fixture.componentInstance;
     videoService = TestBed.inject(VideoService);
     commentService = TestBed.inject(CommentService);
+    userService = TestBed.inject(UserService);
+    authService = TestBed.inject(AuthService);
+
     component.videoMetadata = {
       video_id: 'ABCD1234',
       title: 'Test Video',
@@ -274,7 +291,7 @@ describe('PlayerComponent', () => {
     errorCallback(Hls.Events.ERROR, errorData);
     expect(recoverMediaErrorSpy).toHaveBeenCalled();
   });
-  it('should suecide when Hls encounters unknown fatal error', () => {
+  it('should suecide when HlS encounters unknown fatal error', () => {
     const destroySpy = vi.spyOn(Hls.prototype, 'destroy').mockImplementation(() => {});
     vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
     vi.spyOn(Hls.prototype, 'loadSource').mockImplementation(() => {});
@@ -421,6 +438,44 @@ describe('PlayerComponent', () => {
     await vi.advanceTimersByTimeAsync(10000);
     expect(incrementSpy).toHaveBeenCalledWith('ABCD1234');
     expect((component as any).hasCountedView).toBe(true);
+  });
+
+  it('should toggle loop when loop button is clicked', () => {
+    const video = component.videoRef.nativeElement;
+
+    const plyrVideoWrapper = document.createElement('div');
+    const controls = document.createElement('div');
+    controls.className = 'plyr__controls';
+    const settingBtn = document.createElement('button');
+    settingBtn.setAttribute('data-plyr', 'settings');
+    controls.appendChild(settingBtn);
+    const plyrContainer = document.createElement('div');
+    plyrContainer.className = 'plyr';
+    plyrContainer.appendChild(controls);
+
+    const closestSpy = vi.spyOn(video, 'closest').mockImplementation((selector: string) => {
+      if (selector === '.plyr') return plyrContainer;
+      if (selector === '.plyr__video-wrapper') return plyrVideoWrapper;
+      return null;
+    });
+
+    component.initPlyr(video);
+
+    expect(mockReadyCallback).toBeTruthy();
+    mockReadyCallback!();
+
+    const loopButton =
+      controls.querySelectorAll('.plyr__control')[1] as HTMLButtonElement;
+    expect(loopButton).toBeTruthy();
+
+    const plyrInstance = (component as any).player as { loop: boolean };
+    expect(plyrInstance.loop).toBe(false);
+    loopButton.click();
+    expect(plyrInstance.loop).toBe(true);
+    loopButton.click();
+    expect(plyrInstance.loop).toBe(false);
+
+    closestSpy.mockRestore();
   });
 
   it('Tag input opening and closing test', () => {

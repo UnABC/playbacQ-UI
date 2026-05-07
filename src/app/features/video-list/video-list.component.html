@@ -29,7 +29,13 @@
 			</div>
 			<mat-card-content class="card-content">
 				<div class="video-title" [title]="video.title">{{ video.title }}</div>
-
+				@if (uploadUserIcons[video.user_id]) {
+				<button class="uploader" type="button" [title]="video.user_id" [routerLink]="['/']"
+					[queryParams]="{ userId: video.user_id }" (click)="$event.stopPropagation()">
+					<img class="uploader-icon" [src]="uploadUserIcons[video.user_id]" alt="Uploader Icon">
+					{{ video.user_id }}
+				</button>
+				}
 				<div class="video-metadata">
 					<span class="views" style="display: flex; align-items: center; gap: 4px;">
 						<mat-icon>
@@ -41,11 +47,13 @@
 						</mat-icon>
 						{{ commentCount(video) }}
 					</span>
-					<span class="date" style="display: flex; align-items: center; gap: 4px;">
-						<mat-icon>
-							upload
-						</mat-icon>
-						{{ video.created_at | date:'yyyy/MM/dd' }}
+					<span>
+						<span class="date" style="display: flex; align-items: center; gap: 4px;">
+							<mat-icon>
+								upload
+							</mat-icon>
+							{{ video.created_at | date:'yyyy/MM/dd' }}
+						</span>
 					</span>
 				</div>
 			</mat-card-content>

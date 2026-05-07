@@ -7,8 +7,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
+import { UserService } from '../../core/services/user.service';
 import { Video } from '../../core/models/video.model';
 import { Comment } from '../../core/models/video.model';
+import { U } from '@angular/cdk/keycodes';
 
 @Component({
   selector: 'app-video-list',
@@ -27,6 +29,7 @@ import { Comment } from '../../core/models/video.model';
 export class VideoListComponent implements OnInit {
   private videoService = inject(VideoService);
   private commentService = inject(CommentService);
+  private userService = inject(UserService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -35,6 +38,7 @@ export class VideoListComponent implements OnInit {
   currentSort = 'created_at';
   currentOrder: number = 0;
   commentCounts: { [videoId: string]: number } = {};
+  uploadUserIcons: { [userId: string]: string } = {};
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
@@ -47,12 +51,19 @@ export class VideoListComponent implements OnInit {
           sortby: this.currentSort,
           order: this.currentOrder,
           ...(params['tag'] && { tag: params['tag'] }),
+          ...(params['userId'] && { userId: params['userId'] }),
         })
         .subscribe((videos) => {
           this.videoList = videos;
           this.cdr.detectChanges();
 
           videos.forEach((video) => {
+            // ユーザーのアイコンを取得
+            this.userService.getUserIcon(video.user_id).subscribe((icon: Blob) => {
+              this.uploadUserIcons[video.user_id] = URL.createObjectURL(icon);
+              this.cdr.detectChanges();
+            });
+
             this.commentService.getComments(video.video_id).subscribe((comments: Comment[]) => {
               this.commentCounts[video.video_id] = comments.length;
               this.cdr.detectChanges();

@@ -100,6 +100,14 @@
         </div>
       </mat-card-subtitle>
 
+      <mat-card-subtitle style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+        <button class="uploader" type="button" [title]="videoMetadata.user_id" [routerLink]="['/']"
+          [queryParams]="{ userId: videoMetadata.user_id }">
+          <img *ngIf="userIconUrl" class="uploader-icon" [src]="userIconUrl" alt="Uploader Icon">
+          {{ videoMetadata.user_id }}
+        </button>
+      </mat-card-subtitle>
+
       <mat-card-subtitle style="display: flex; flex-direction: column; gap: 8px;margin-top: 8px;">
         <div class="video-tags"
           style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ElementRef } from '@angular/core';
 import { Router, provideRouter, NavigationEnd } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { UserService } from './core/services/user.service';
@@ -48,6 +49,42 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('playbacQ');
+  });
+  // 各種関数のテスト
+  it('should toggle user menu', () => {
+    expect(app.isOpenUserMenu).toBe(false);
+    app.toggleUserMenu();
+    expect(app.isOpenUserMenu).toBe(true);
+    app.toggleUserMenu();
+    expect(app.isOpenUserMenu).toBe(false);
+  });
+  it('should close user menu when clicking outside', async () => {
+    const wrapperElement = document.createElement('div');
+    const outsideElment = document.createElement('button');
+    app.isOpenUserMenu = true;
+    app.userMenuWrapperRef = new ElementRef(wrapperElement);
+
+    const mockEvent = { target: outsideElment } as unknown as MouseEvent;
+    app.onDocumentClick(mockEvent);
+    expect(app.isOpenUserMenu).toBe(false);
+  });
+  it('should not close user menu when clicking inside', async () => {
+    const wrapperElement = document.createElement('div');
+    app.isOpenUserMenu = true;
+    app.userMenuWrapperRef = new ElementRef(wrapperElement);
+
+    const mockEvent = { target: wrapperElement } as unknown as MouseEvent;
+    app.onDocumentClick(mockEvent);
+    expect(app.isOpenUserMenu).toBe(true);
+  });
+  it('should not close user menu when userMenuWrapperRef is not set', async () => {
+    const outsideElment = document.createElement('button');
+    app.isOpenUserMenu = true;
+    app.userMenuWrapperRef = undefined as any;
+
+    const mockEvent = { target: outsideElment } as unknown as MouseEvent;
+    app.onDocumentClick(mockEvent);
+    expect(app.isOpenUserMenu).toBe(true);
   });
   // ダイアログのテスト
   it('should open upload dialog', async () => {

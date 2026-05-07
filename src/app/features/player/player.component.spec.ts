@@ -27,6 +27,7 @@ let mockReadyCallback: Function | null = null;
 
 vi.mock('plyr', () => {
   class MockPlyr {
+    loop = false;
     constructor() {}
     on(eventName: string, callback: Function) {
       if (eventName === 'playing') {
@@ -290,7 +291,7 @@ describe('PlayerComponent', () => {
     errorCallback(Hls.Events.ERROR, errorData);
     expect(recoverMediaErrorSpy).toHaveBeenCalled();
   });
-  it('should suecide when Hls encounters unknown fatal error', () => {
+  it('should suecide when HlS encounters unknown fatal error', () => {
     const destroySpy = vi.spyOn(Hls.prototype, 'destroy').mockImplementation(() => {});
     vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
     vi.spyOn(Hls.prototype, 'loadSource').mockImplementation(() => {});
@@ -437,6 +438,44 @@ describe('PlayerComponent', () => {
     await vi.advanceTimersByTimeAsync(10000);
     expect(incrementSpy).toHaveBeenCalledWith('ABCD1234');
     expect((component as any).hasCountedView).toBe(true);
+  });
+
+  it('should toggle loop when loop button is clicked', () => {
+    const video = component.videoRef.nativeElement;
+
+    const plyrVideoWrapper = document.createElement('div');
+    const controls = document.createElement('div');
+    controls.className = 'plyr__controls';
+    const settingBtn = document.createElement('button');
+    settingBtn.setAttribute('data-plyr', 'settings');
+    controls.appendChild(settingBtn);
+    const plyrContainer = document.createElement('div');
+    plyrContainer.className = 'plyr';
+    plyrContainer.appendChild(controls);
+
+    const closestSpy = vi.spyOn(video, 'closest').mockImplementation((selector: string) => {
+      if (selector === '.plyr') return plyrContainer;
+      if (selector === '.plyr__video-wrapper') return plyrVideoWrapper;
+      return null;
+    });
+
+    component.initPlyr(video);
+
+    expect(mockReadyCallback).toBeTruthy();
+    mockReadyCallback!();
+
+    const loopButton =
+      controls.querySelectorAll('.plyr__control')[1] as HTMLButtonElement;
+    expect(loopButton).toBeTruthy();
+
+    const plyrInstance = (component as any).player as { loop: boolean };
+    expect(plyrInstance.loop).toBe(false);
+    loopButton.click();
+    expect(plyrInstance.loop).toBe(true);
+    loopButton.click();
+    expect(plyrInstance.loop).toBe(false);
+
+    closestSpy.mockRestore();
   });
 
   it('Tag input opening and closing test', () => {

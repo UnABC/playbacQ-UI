@@ -1,6 +1,7 @@
 <div class="player-container">
   <div [class.video-wrapper]="!isEmbed" [class.is-loading]="isLoading" [class.embed-mode]="isEmbed">
-    <video #videoElement crossorigin="anonymous" class="video-element"></video>
+    <div #ytElement [hidden]="videoMetadata?.type !== 'youtube'" data-plyr-provider="youtube" [attr.data-plyr-embed-id]="videoMetadata?.type === 'youtube' ? videoMetadata?.video_url : null"></div>
+    <video #hlsElement [hidden]="videoMetadata?.type === 'youtube'" crossorigin="anonymous" class="video-element"></video>
 
     <canvas #commentCanvas class="danmaku-canvas"></canvas>
 

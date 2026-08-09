@@ -116,6 +116,7 @@ export class UploadComponent {
 
   importFromYouTube() {
     this.isImporting = true;
+    this.selectedFile = null;
     // インポート時は url を必須、title を任意にする
     this.videoForm.controls.title.clearValidators();
     this.videoForm.controls.title.updateValueAndValidity();

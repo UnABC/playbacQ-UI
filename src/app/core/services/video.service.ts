@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 })
 export class VideoService {
   private http = inject(HttpClient);
+  private readonly apiBaseUrl = environment.apiUrl;
   private readonly apiUrl = environment.apiUrl + '/api/videos';
 
   getVideos(params: any): Observable<Video[]> {
@@ -41,6 +42,10 @@ export class VideoService {
 
   createVideo(title: string, description: string, content_type: string): Observable<Video> {
     return this.http.post<Video>(this.apiUrl, { title, description, content_type });
+  }
+
+  uploadExVideo(title: string, description: string, url: string): Observable<Video> {
+    return this.http.post<Video>(`${this.apiBaseUrl}/api/ex-videos`, { title, description, url });
   }
 
   getVideoTags(id: string): Observable<Tag[]> {

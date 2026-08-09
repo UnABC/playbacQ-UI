@@ -42,6 +42,7 @@ export class UploadComponent {
   private changeDetector = inject(ChangeDetectorRef);
   isDragging = false;
   isUploadStarted = false;
+  isImporting = false;
 
   selectedFile: File | null = null;
   videoTitle: string = '';
@@ -49,11 +50,13 @@ export class UploadComponent {
   uploadProgress: number = 0;
   uploadStatusMessage: string = '';
   uploadedVideoUrl: string = '';
+  importedVideoTitle: string = '';
   @ViewChild('stepper') private stepper!: MatStepper;
 
   steps = ['動画の選択', '基本情報の入力', 'アップロード', '完了'];
 
   videoForm = new FormGroup({
+    url: new FormControl('', { nonNullable: true }),
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     description: new FormControl('', { nonNullable: true }),
   });
@@ -97,8 +100,29 @@ export class UploadComponent {
       return;
     }
     this.selectedFile = file;
+    this.isImporting = false;
     console.log('selectedFile:', file.name);
+    // ファイルアップロード時は title を必須、url を任意にする
+    this.videoForm.controls.url.clearValidators();
+    this.videoForm.controls.url.updateValueAndValidity();
+    this.videoForm.controls.title.setValidators([Validators.required]);
+    this.videoForm.controls.title.updateValueAndValidity();
+
     // 画面の更新を待ってから次のステップに進む
+    setTimeout(() => {
+      this.stepper.next();
+    });
+  }
+
+  importFromYouTube() {
+    this.isImporting = true;
+    this.selectedFile = null;
+    // インポート時は url を必須、title を任意にする
+    this.videoForm.controls.title.clearValidators();
+    this.videoForm.controls.title.updateValueAndValidity();
+    this.videoForm.controls.url.setValidators([Validators.required]);
+    this.videoForm.controls.url.updateValueAndValidity();
+
     setTimeout(() => {
       this.stepper.next();
     });
@@ -106,6 +130,27 @@ export class UploadComponent {
 
   startUpload() {
     if (this.videoForm.invalid) {
+      return;
+    }
+    // 外部からインポート
+    if (this.isImporting) {
+      this.isUploadStarted = true;
+      const { title, description, url } = this.videoForm.getRawValue();
+      setTimeout(() => {
+        this.stepper.next();
+        this.videoService.uploadExVideo(title, description, url).subscribe({
+          next: (video) => {
+            this.importedVideoTitle = video.title;
+            this.uploadStatusMessage = 'アップロードが完了しました！';
+            this.stepper.next();
+          },
+          error: (err) => {
+            console.error('通信エラーが発生しました…', err);
+            alert('動画の作成に失敗しました。もう一度お試しください。');
+            this.stepper.previous();
+          },
+        });
+      });
       return;
     }
     if (!this.selectedFile) {

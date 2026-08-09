@@ -67,6 +67,7 @@ describe('PlayerComponent', () => {
           user_id: 'user',
           description: 'A test video',
           duration: 40,
+          type: 'internal',
         }),
       ),
       removeVideoTag: vi.fn().mockReturnValue(of(undefined)),
@@ -136,6 +137,7 @@ describe('PlayerComponent', () => {
       user_id: 'user',
       description: 'A test video',
       duration: 40,
+      type: 'internal',
     } as any;
     tagService = TestBed.inject(TagService);
     vi.useFakeTimers();
@@ -153,7 +155,7 @@ describe('PlayerComponent', () => {
   // Hls.jsの初期化テスト
   it('should initialize Hls.js when supported', async () => {
     vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
-    const video = component.videoRef.nativeElement;
+    const video = component.hlsRef.nativeElement;
     const loadSourceSpy = vi.spyOn(Hls.prototype, 'loadSource').mockImplementation(() => {});
     const attachMediaSpy = vi.spyOn(Hls.prototype, 'attachMedia').mockImplementation(() => {});
     const onSpy = vi.spyOn(Hls.prototype, 'on').mockImplementation(() => {});
@@ -164,7 +166,7 @@ describe('PlayerComponent', () => {
 
     expect(Hls.isSupported).toHaveBeenCalled();
     expect(loadSourceSpy).toHaveBeenCalledWith(`${environment.apiUrl}/api/videos/ABCD1234/play`);
-    expect(attachMediaSpy).toHaveBeenCalledWith((component as any).videoRef.nativeElement);
+    expect(attachMediaSpy).toHaveBeenCalledWith(component.hlsRef.nativeElement);
     expect(onSpy).toHaveBeenCalledWith(Hls.Events.MANIFEST_PARSED, expect.any(Function));
 
     const manifestParsedCalls = onSpy.mock.calls.filter(
@@ -201,7 +203,7 @@ describe('PlayerComponent', () => {
     const onceSpy = vi.spyOn(Hls.prototype, 'once').mockImplementation(() => {});
     vi.spyOn(component as any, 'initPlyr').mockImplementation(() => {});
 
-    const video = component.videoRef.nativeElement;
+    const video = component.hlsRef.nativeElement;
     video.currentTime = 10;
     Object.defineProperty(video, 'paused', { value: false, configurable: true });
     const playSpy = vi.spyOn(video, 'play').mockImplementation(async () => {});
@@ -311,7 +313,7 @@ describe('PlayerComponent', () => {
     expect(destroySpy).toHaveBeenCalled();
   });
   it('should use native HLS if supported', () => {
-    const video = component.videoRef.nativeElement;
+    const video = component.hlsRef.nativeElement;
     const canPlayTypeSpy = vi.spyOn(video, 'canPlayType').mockReturnValue('probably');
     const addEventListenerSpy = vi.spyOn(video, 'addEventListener').mockImplementation(() => {});
     const initPlyrSpy = vi.spyOn(component as any, 'initPlyr').mockImplementation(() => {});
@@ -336,7 +338,7 @@ describe('PlayerComponent', () => {
   it('should replay the video when native HLS encounters an error 3 or 4', () => {
     const mockTime = 1234567890;
     vi.setSystemTime(new Date(mockTime));
-    const video = component.videoRef.nativeElement;
+    const video = component.hlsRef.nativeElement;
     vi.spyOn(video, 'canPlayType').mockReturnValue('probably');
     const addEventListenerSpy = vi.spyOn(video, 'addEventListener').mockImplementation(() => {});
     const playSpy = vi.spyOn(video, 'play').mockImplementation(async () => {});
@@ -377,7 +379,7 @@ describe('PlayerComponent', () => {
   });
   // Plyrの初期化テスト
   it('should initialize Plyr when player is ready', () => {
-    const video = component.videoRef.nativeElement;
+    const video = component.hlsRef.nativeElement;
 
     const plyrVideoWrapper = document.createElement('div');
     const controls = document.createElement('div');
@@ -421,7 +423,7 @@ describe('PlayerComponent', () => {
   });
 
   it('should start view counting timer when playing and cancel when seeking', async () => {
-    const video = component.videoRef.nativeElement;
+    const video = component.hlsRef.nativeElement;
     component.initPlyr(video);
     expect(mockPlayingCallback).toBeTruthy();
     expect(mockSeekingCallback).toBeTruthy();
@@ -441,7 +443,7 @@ describe('PlayerComponent', () => {
   });
 
   it('should toggle loop when loop button is clicked', () => {
-    const video = component.videoRef.nativeElement;
+    const video = component.hlsRef.nativeElement;
 
     const plyrVideoWrapper = document.createElement('div');
     const controls = document.createElement('div');

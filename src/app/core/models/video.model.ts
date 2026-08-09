@@ -12,6 +12,7 @@ export interface Video {
   duration: number;
   like_count: number;
   status: number;
+  type: string;
 }
 
 export interface Comment {

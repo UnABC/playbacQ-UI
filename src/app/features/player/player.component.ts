@@ -61,7 +61,8 @@ type Plyr = PlyrType;
   styleUrls: ['./player.component.css'],
 })
 export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('videoElement', { static: true }) videoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('hlsElement', { static: true }) hlsRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('ytElement', { static: true }) ytRef!: ElementRef<HTMLDivElement>;
   @ViewChild('commentInput') commentInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('commandInput') commandInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('commentCanvas') commentCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -120,9 +121,9 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
               this.cdr.detectChanges();
             });
           }
+          this.initPlayer();
         });
       }
-      this.initPlayer();
       if (this.isEmbed) {
         const token = this.route.snapshot.queryParamMap.get('token') ?? '';
         this.commentService.getEmbedComments(this.videoId, token).subscribe((comments) => {
@@ -204,6 +205,9 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     this.ctx = canvas.getContext('2d')!;
+    if (this.isEmbed) {
+      this.initPlayer();
+    }
   }
 
   startCommentLoop(): void {
@@ -224,8 +228,26 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     this.animationFrameId = requestAnimationFrame(loop);
   }
 
+  get isExternalVideo(): boolean {
+    return this.videoMetadata != null && this.videoMetadata.type !== 'internal';
+  }
+
   initPlayer(): void {
-    const video: HTMLVideoElement = this.videoRef.nativeElement;
+    const isYouTube = this.isExternalVideo;
+    const playerElement = isYouTube ? this.ytRef?.nativeElement : this.hlsRef?.nativeElement;
+
+    if (!playerElement) {
+      console.error('Player element not found!');
+      return;
+    }
+
+    if (isYouTube) {
+      // YouTubeの場合はHLSの初期化をスキップして直接Plyrに任せる
+      this.initPlyr(playerElement);
+      return;
+    }
+
+    const video = playerElement as HTMLVideoElement;
     const token = this.route.snapshot.queryParamMap.get('token') ?? '';
     const manifestUrl = this.isEmbed
       ? `${environment.apiUrl}/unauthApi/embed/${this.videoId}?token=${token}`
@@ -321,9 +343,16 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  initPlyr(video: HTMLVideoElement): void {
+  initPlyr(video: HTMLElement): void {
     const token = this.route.snapshot.queryParamMap.get('token') ?? '';
     this.player = new Plyr(video, {
+      youtube: {
+        cc_load_policy: 1,
+        cc_lang_pref: 'oyoo', // ダミー言語により字幕を非表示にしている
+        rel: 0,
+        iv_load_policy: 3,
+      },
+      captions: { active: false },
       controls: [
         'play-large',
         'play',
@@ -331,6 +360,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         'current-time',
         'mute',
         'volume',
+        'captions',
         'settings',
         'fullscreen',
       ],
@@ -348,13 +378,27 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.player !== null) {
       const countViewTime = Math.min((this.videoMetadata?.duration ?? 0) / 4, 300) * 1000;
       this.player.on('ready', () => {
-        const plyrContainer = video.closest('.plyr');
-        const plyrVideoWrapper = video.closest('.plyr__video-wrapper');
+        if (this.isExternalVideo) {
+          if (this.player) {
+            try {
+              (this.player as any).embed?.unloadModule('captions');
+              (this.player as any).embed?.unloadModule('cc');
+            } catch (e) {}
+          }
+        }
+
+        // Plyrの要素APIを使用して、DOM構造の変更（特にYouTube iframe化）に依存しないようにする
+        const plyrContainer = (this.player as any).elements?.container || video.closest('.plyr');
+        const plyrVideoWrapper =
+          (this.player as any).elements?.wrapper || video.closest('.plyr__video-wrapper');
+
         if (plyrVideoWrapper && this.commentCanvasRef) {
           plyrVideoWrapper.appendChild(this.commentCanvasRef.nativeElement);
         }
 
-        const controls = plyrContainer?.querySelector('.plyr__controls');
+        const controls =
+          (this.player as any).elements?.controls ||
+          plyrContainer?.querySelector('.plyr__controls');
         const settingBtn = controls?.querySelector('[data-plyr="settings"]');
 
         if (controls && settingBtn) {
@@ -415,6 +459,14 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       });
       if (!this.isEmbed) {
         this.player.on('playing', () => {
+          if (this.isExternalVideo) {
+            try {
+              (this.player as any).embed?.unloadModule('captions');
+              (this.player as any).embed?.unloadModule('cc');
+              (this.player as any).embed?.setOption('captions', 'track', {});
+            } catch (e) {}
+          }
+
           if (!this.hasCountedView) {
             // 再生が始まったら10秒後にカウントAPIを叩くタイマーをセット！
             this.viewTimer = setTimeout(() => {

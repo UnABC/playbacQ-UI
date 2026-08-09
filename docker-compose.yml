@@ -10,3 +10,10 @@ services:
       - /app/node_modules # ホスト側のnode_modulesで上書きされないようにする匿名ボリューム
     environment:
       - CHOKIDAR_USEPOLLING=true # ホットリロードを確実に機能させるため
+    networks:
+      - default
+      - playbacq_default
+
+networks:
+  playbacq_default:
+    external: true

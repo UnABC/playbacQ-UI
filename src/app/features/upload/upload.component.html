@@ -7,7 +7,7 @@
 	</div>
 	<mat-stepper [linear]="true" #stepper>
 
-		<mat-step label="動画の選択" [completed]="hasFile" [editable]="!isUploadStarted">
+		<mat-step label="動画の選択" [completed]="hasFile || isImporting" [editable]="!isUploadStarted">
 			<div class="step-content">
 				<div class="upload-container">
 					<div class="drop-zone" [class.dragging]="isDragging" (dragover)="onDragOver($event)"
@@ -28,6 +28,10 @@
 						</div>
 					</div>
 				</div>
+				<div>
+					<p>または</p>
+					<a class="import-link" (click)="importFromYouTube()">YouTubeから動画をインポート</a>
+				</div>
 			</div>
 		</mat-step>
 
@@ -35,10 +39,23 @@
 
 			<div class="step-content form-container">
 				<form [formGroup]="videoForm">
+					@if (isImporting){
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>動画のリンク</mat-label>
+						<input matInput formControlName="url" placeholder="https://www.youtube.com/watch?v=..."
+							required>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>動画のタイトル</mat-label>
+						<input matInput formControlName="title">
+					</mat-form-field>
+					}@else{
 					<mat-form-field appearance="outline" class="full-width">
 						<mat-label>動画のタイトル (必須)</mat-label>
 						<input matInput formControlName="title" required>
 					</mat-form-field>
+					}
 
 					<mat-form-field appearance="outline" class="full-width">
 						<mat-label>動画の説明</mat-label>
@@ -72,7 +89,11 @@
 		<mat-step label="完了" [editable]="false">
 			<div class="step-content">
 				<h3>アップロードが完了しました！</h3>
-				<p>動画のタイトル: <b>{{ videoForm.get('title')?.value }}</b></p>
+				<p>動画のタイトル: <b>@if (isImporting){
+						{{ importedVideoTitle }}
+						} @else {
+						{{ videoForm.get('title')?.value }}
+						}</b></p>
 				<button mat-button mat-dialog-close>閉じる</button>
 			</div>
 		</mat-step>

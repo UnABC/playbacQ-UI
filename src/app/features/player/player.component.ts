@@ -29,6 +29,7 @@ import { CommentService } from '../../core/services/comment.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TagService } from '../../core/services/tag.service';
 import { UserService } from '../../core/services/user.service';
+import { StampService } from '../../core/services/stamp.service';
 import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
 import { environment } from '../../../environments/environment';
@@ -79,6 +80,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
+  private stampService = inject(StampService);
   private hls: Hls | null = null;
   private videoId: string = '';
   private player: Plyr | null = null;
@@ -138,6 +140,9 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
             this.comments.push(new Comment(c.comment, c.timestamp, c.command));
           });
           this.decideYPosition();
+          if (comments.length > 0) {
+            this.stampService.loadStamps();
+          }
         });
       }
 

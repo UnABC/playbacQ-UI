@@ -1,3 +1,6 @@
+import { parseComment, CommentSegment } from '../../shared/utils/stamp-parser';
+import { StampService } from '../../core/services/stamp.service';
+
 export class Comment {
   private duration: number;
   private font = '';
@@ -6,13 +9,20 @@ export class Comment {
   private strokeColor: string;
   private speed: number;
   private textXsize: number = 0;
+  private commentSegments: CommentSegment[];
+  private fontSize: number = 34;
   position: 'ue' | 'naka' | 'shita' = 'naka';
   height: number;
   y: number;
   timestamp: number;
   appearTime: number;
 
-  constructor(text: string, timestamp: number, command: string) {
+  constructor(
+    text: string = '',
+    timestamp: number = 0,
+    command: string = '',
+    private stampService?: StampService,
+  ) {
     this.timestamp = timestamp;
     this.text = text;
     this.y = 4;
@@ -25,22 +35,21 @@ export class Comment {
 
     const commentLineLength = text.split('\n').length;
     const cmds = command.toLowerCase().split(/\s+/);
-    let fontSize = 34;
     let fontName = 'sans-serif';
     for (const cmd of cmds) {
       switch (cmd) {
         // size
         case 'big':
-          if (commentLineLength < 3) fontSize = 45 * commentLineLength + 5;
-          else fontSize = 24 * commentLineLength + 3;
+          if (commentLineLength < 3) this.fontSize = 45 * commentLineLength + 5;
+          else this.fontSize = 24 * commentLineLength + 3;
           break;
         case 'medium':
-          if (commentLineLength < 5) fontSize = 29 * commentLineLength + 5;
-          else fontSize = 15 * commentLineLength + 3;
+          if (commentLineLength < 5) this.fontSize = 29 * commentLineLength + 5;
+          else this.fontSize = 15 * commentLineLength + 3;
           break;
         case 'small':
-          if (commentLineLength < 7) fontSize = 18 * commentLineLength + 5;
-          else fontSize = 10 * commentLineLength + 3;
+          if (commentLineLength < 7) this.fontSize = 18 * commentLineLength + 5;
+          else this.fontSize = 10 * commentLineLength + 3;
           break;
         // font
         case 'gothic':
@@ -98,16 +107,32 @@ export class Comment {
           }
       }
     }
-    fontSize *= 2.3;
-    fontSize = Math.round(fontSize);
-    this.textXsize = Math.round(fontSize * text.length);
-    this.font = `bold ${fontSize}px ${fontName}`;
-    this.height = fontSize * commentLineLength;
+    this.fontSize *= 2.3;
+    this.fontSize = Math.round(this.fontSize);
+    this.font = `bold ${this.fontSize}px ${fontName}`;
+    this.height = this.fontSize * commentLineLength;
+    // パース
+    if (this.stampService && this.stampService.stamps().size > 0) {
+      this.commentSegments = parseComment(text, (name) => this.stampService!.getStampImage(name));
+    } else {
+      this.commentSegments = [{ type: 'text', text }];
+    }
+    // 文字数に応じて横幅を計算
+    let textLength = 0;
+    for (const segment of this.commentSegments) {
+      if (segment.type === 'text') {
+        textLength += segment.text.length;
+      } else if (segment.type === 'stamp') {
+        textLength += 1.2; // スタンプは文字数換算で1.2文字分とする
+      }
+    }
+
+    this.textXsize = Math.round(this.fontSize * textLength);
     if (this.position === 'naka') {
       // 文字数に応じて速度を調整
-      this.speed = 372 + text.length * 36;
+      this.speed = 372 + textLength * 36;
       // 2文字分空白を入れる
-      this.appearTime = (this.textXsize + fontSize * 2) / this.speed;
+      this.appearTime = (this.textXsize + this.fontSize * 2) / this.speed;
       this.duration = (1920 + this.textXsize) / this.speed;
     } else {
       this.speed = 0;
@@ -129,7 +154,26 @@ export class Comment {
     ctx.lineWidth = 4;
     ctx.textBaseline = 'top';
 
-    ctx.strokeText(this.text, currentX, this.y);
-    ctx.fillText(this.text, currentX, this.y);
+    let drawX = currentX;
+    const stampSize = this.fontSize;
+
+    for (const segment of this.commentSegments) {
+      if (segment.type === 'text') {
+        ctx.strokeText(segment.text, drawX, this.y);
+        ctx.fillText(segment.text, drawX, this.y);
+        drawX += ctx.measureText(segment.text).width;
+      } else if (segment.type === 'stamp') {
+        const img = segment.image;
+        if (img && img.complete && img.naturalWidth > 0) {
+          ctx.drawImage(img, drawX, this.y, stampSize, stampSize);
+          drawX += stampSize;
+        } else {
+          // 画像がまだ読み込まれていない場合は、プレースホルダーを描画する
+          ctx.fillStyle = '#cccccc';
+          ctx.fillRect(drawX, this.y, stampSize, stampSize);
+          drawX += stampSize;
+        }
+      }
+    }
   }
 }

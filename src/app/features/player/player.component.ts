@@ -130,14 +130,14 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         const token = this.route.snapshot.queryParamMap.get('token') ?? '';
         this.commentService.getEmbedComments(this.videoId, token).subscribe((comments) => {
           comments.map((c) => {
-            this.comments.push(new Comment(c.comment, c.timestamp, c.command));
+            this.comments.push(new Comment(c.comment, c.timestamp, c.command, this.stampService));
           });
           this.decideYPosition();
         });
       } else {
         this.commentService.getComments(this.videoId).subscribe((comments) => {
           comments.map((c) => {
-            this.comments.push(new Comment(c.comment, c.timestamp, c.command));
+            this.comments.push(new Comment(c.comment, c.timestamp, c.command, this.stampService));
           });
           this.decideYPosition();
           if (comments.length > 0) {
@@ -150,7 +150,9 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       this.commentService.connect(this.videoId);
       this.commentSubscription = this.commentService.messages$.subscribe((msg) => {
         console.log('Received comment via WebSocket:', msg);
-        this.comments.push(new Comment(msg.content, msg.timestamp, msg.command));
+        const text = msg.comment ?? msg.content ?? '';
+        const command = msg.command ?? '';
+        this.comments.push(new Comment(text, msg.timestamp, command, this.stampService));
         this.decideYPosition();
       });
       // タグのサジェスト機能
@@ -625,7 +627,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
     const currentTime = this.player?.currentTime ?? 0;
-    this.comments.push(new Comment(commentText, currentTime, commandText));
+    this.comments.push(new Comment(commentText, currentTime, commandText, this.stampService));
     this.decideYPosition();
     this.commentService.postComment(this.videoId, commentText, currentTime, commandText).subscribe({
       next: () => {

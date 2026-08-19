@@ -83,6 +83,9 @@ describe('Comment Class', () => {
       mockCtx = {
         strokeText: vi.fn(),
         fillText: vi.fn(),
+        measureText: vi.fn().mockReturnValue({ width: 50 }),
+        drawImage: vi.fn(),
+        fillRect: vi.fn(),
       };
     });
     it('should skip drawing if currentTime is before appearTime', () => {
@@ -107,6 +110,7 @@ describe('Comment Class', () => {
       expect(mockCtx.textBaseline).toBe('top');
       expect(mockCtx.strokeText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
       expect(mockCtx.fillText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
+      expect(mockCtx.measureText).toHaveBeenCalledWith('テスト');
 
       // ueやshitaの場合はy座標が変わることも確認
       comment.position = 'ue';
@@ -118,6 +122,34 @@ describe('Comment Class', () => {
       comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
       expect(mockCtx.fillText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
       expect(mockCtx.strokeText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
+    });
+
+    it('should draw stamp segment when image is loaded', () => {
+      const mockStampService = {
+        stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
+        getStampImage: vi.fn().mockReturnValue({
+          complete: true,
+          naturalWidth: 32,
+        }),
+      } as any;
+      const comment = new Comment(':stamp1: テスト', 1000, '', mockStampService);
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.drawImage).toHaveBeenCalled();
+      expect(mockCtx.strokeText).toHaveBeenCalledWith(' テスト', expect.any(Number), expect.any(Number));
+      expect(mockCtx.measureText).toHaveBeenCalledWith(' テスト');
+    });
+
+    it('should draw placeholder when stamp image is not loaded yet', () => {
+      const mockStampService = {
+        stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
+        getStampImage: vi.fn().mockReturnValue({
+          complete: false,
+          naturalWidth: 0,
+        }),
+      } as any;
+      const comment = new Comment(':stamp1:', 1000, '', mockStampService);
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
     });
   });
 });

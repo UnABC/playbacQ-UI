@@ -1,6 +1,8 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Stamp } from '../models/stamp.model';
+import { parseGIF, decompressFrames } from 'gifuct-js';
+import { StampFrame, AnimatedStampData } from '../models/stamp.model';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +13,7 @@ export class StampService {
 
   private stampSinal = signal<Map<string, string>>(new Map());
   public readonly stamps = this.stampSinal.asReadonly();
-  private imageCache = new Map<string, HTMLImageElement>();
+  private stampCache = new Map<string, AnimatedStampData>();
 
   loadStamps() {
     if (this.stampSinal().size > 0) return;
@@ -30,21 +32,65 @@ export class StampService {
     });
   }
 
-  getStampImage(stampName: string): HTMLImageElement | null {
-    if (this.stampSinal().size === 0) {
-      console.warn('StampService: Stamps have not been loaded yet. Call loadStamps() first.');
-      return null;
-    }
+  getStampImage(stampName: string): AnimatedStampData | null {
     const stampId = this.stampSinal().get(stampName);
     if (!stampId) return null;
 
-    if (this.imageCache.has(stampId)) {
-      return this.imageCache.get(stampId)!;
+    if (this.stampCache.has(stampId)) {
+      return this.stampCache.get(stampId)!;
     }
-    console.log(`Loading image for stamp: ${stampName} (ID: ${stampId})`);
-    const image = new Image();
-    image.src = `${this.traQApiUrl}/${stampId}/image`;
-    this.imageCache.set(stampId, image);
-    return image;
+
+    const cacheEntry: AnimatedStampData = { isAnimated: false };
+    this.stampCache.set(stampId, cacheEntry);
+
+    this.http
+      .get(`${this.traQApiUrl}/${stampId}/image`, { responseType: 'arraybuffer' })
+      .subscribe({
+        next: async (buffer) => {
+          try {
+            const gif = parseGIF(buffer);
+            const frames = decompressFrames(gif, true);
+
+            // アニメーションGIF
+            if (frames.length > 1) {
+              const stampFrames: StampFrame[] = [];
+              let totalDuration = 0;
+
+              for (const frame of frames) {
+                const imageData = new ImageData(
+                  new Uint8ClampedArray(frame.patch),
+                  frame.dims.width,
+                  frame.dims.height,
+                );
+                const bitmap = await createImageBitmap(imageData);
+                const delay = frame.delay || 200;
+                stampFrames.push({ bitmap, delay });
+                totalDuration += delay;
+              }
+              cacheEntry.isAnimated = true;
+              cacheEntry.frames = stampFrames;
+              cacheEntry.totalDuration = totalDuration;
+            } else {
+              // 静止画
+              this.loadStaticImage(stampId, cacheEntry);
+            }
+          } catch {
+            // 静止画
+            this.loadStaticImage(stampId, cacheEntry);
+          }
+        },
+        error: () => {
+          // 静止画
+          this.loadStaticImage(stampId, cacheEntry);
+        },
+      });
+    return cacheEntry;
+  }
+
+  private loadStaticImage(stampId: string, cacheEntry: AnimatedStampData) {
+    const img = new Image();
+    img.src = `${this.traQApiUrl}/${stampId}/image`;
+    cacheEntry.isAnimated = false;
+    cacheEntry.staticImage = img;
   }
 }

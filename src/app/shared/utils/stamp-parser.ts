@@ -1,11 +1,13 @@
+import { AnimatedStampData } from '../../core/models/stamp.model';
+
 export type CommentSegment =
   | { type: 'text'; text: string }
-  | { type: 'stamp'; name: string; image: HTMLImageElement | null };
-const STAMP_REGEX = /:([a-zA-Z0-9_]+):/g;
+  | { type: 'stamp'; name: string; stampData?: AnimatedStampData | null };
+const STAMP_REGEX = /:([a-zA-Z0-9_\-]+):/g;
 
 export function parseComment(
   comment: string,
-  getStampImg: (name: string) => HTMLImageElement | null,
+  getStampData: (name: string) => AnimatedStampData | null,
 ): CommentSegment[] {
   if (!comment) return [];
 
@@ -20,12 +22,10 @@ export function parseComment(
       segments.push({ type: 'text', text: comment.slice(lastIndex, match.index) });
     }
     const stampName = match[1];
-    const stampImage = getStampImg(stampName);
-    if (stampImage) {
-      console.log(`Stamp found: ${stampName}`);
-      segments.push({ type: 'stamp', name: stampName, image: stampImage });
+    const stampData = getStampData(stampName);
+    if (stampData) {
+      segments.push({ type: 'stamp', name: stampName, stampData });
     } else {
-      console.log(`Stamp not found: ${stampName}`);
       // スタンプが見つからない場合は、元のテキストとして扱う
       segments.push({ type: 'text', text: match[0] });
     }

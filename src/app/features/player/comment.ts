@@ -163,9 +163,23 @@ export class Comment {
         ctx.fillText(segment.text, drawX, this.y);
         drawX += ctx.measureText(segment.text).width;
       } else if (segment.type === 'stamp') {
-        const img = segment.image;
-        if (img && img.complete && img.naturalWidth > 0) {
-          ctx.drawImage(img, drawX, this.y, stampSize, stampSize);
+        const stampData = this.stampService?.getStampImage(segment.name);
+        if (stampData?.isAnimated && stampData.frames && stampData.totalDuration) {
+          const now = performance.now();
+          let currentFrameTime = now % stampData.totalDuration;
+
+          let targetBitmap: ImageBitmap = stampData.frames[0].bitmap;
+          for (const frame of stampData.frames) {
+            if (currentFrameTime < frame.delay) {
+              targetBitmap = frame.bitmap;
+              break;
+            }
+            currentFrameTime -= frame.delay;
+          }
+          ctx.drawImage(targetBitmap, drawX, this.y, stampSize, stampSize);
+          drawX += stampSize;
+        } else if (stampData?.staticImage && stampData.staticImage.complete) {
+          ctx.drawImage(stampData.staticImage, drawX, this.y, stampSize, stampSize);
           drawX += stampSize;
         } else {
           // 画像がまだ読み込まれていない場合は、プレースホルダーを描画する

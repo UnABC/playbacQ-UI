@@ -8,3 +8,16 @@ export interface Stamp {
   isUnicode?: boolean;
   hasThumbnail?: boolean;
 }
+
+//GIF用
+export interface StampFrame {
+  bitmap: ImageBitmap;
+  delay: number;
+}
+
+export interface AnimatedStampData {
+  isAnimated: boolean;
+  staticImage?: HTMLImageElement;
+  frames?: StampFrame[];
+  totalDuration?: number;
+}

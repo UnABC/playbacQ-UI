@@ -64,10 +64,8 @@ describe('StampService', () => {
   });
 
   it('should return null from getStampImage when stamps are not loaded', () => {
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const result = service.getStampImage('stamp1');
     expect(result).toBeNull();
-    expect(consoleWarnSpy).toHaveBeenCalled();
   });
 
   it('should return null from getStampImage when stamp is not found', () => {
@@ -84,12 +82,17 @@ describe('StampService', () => {
     const req = httpTestingController.expectOne('/traq-api/stamps');
     req.flush(mockStamps);
 
-    const img1 = service.getStampImage('stamp1');
-    expect(img1).toBeTruthy();
-    expect(img1?.src).toContain('/traq-api/stamps/stamp-id-1/image');
+    const stampData1 = service.getStampImage('stamp1');
+    expect(stampData1).toBeTruthy();
 
-    // Second call should return cached instance
-    const img2 = service.getStampImage('stamp1');
-    expect(img2).toBe(img1);
+    const imageReq = httpTestingController.expectOne('/traq-api/stamps/stamp-id-1/image');
+    expect(imageReq.request.method).toBe('GET');
+    imageReq.flush(new ArrayBuffer(0));
+
+    expect(stampData1?.staticImage?.src).toContain('/traq-api/stamps/stamp-id-1/image');
+
+    // Second call should return cached instance without additional HTTP request
+    const stampData2 = service.getStampImage('stamp1');
+    expect(stampData2).toBe(stampData1);
   });
 });

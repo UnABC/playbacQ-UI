@@ -128,14 +128,21 @@ describe('Comment Class', () => {
       const mockStampService = {
         stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
         getStampImage: vi.fn().mockReturnValue({
-          complete: true,
-          naturalWidth: 32,
+          isAnimated: false,
+          staticImage: {
+            complete: true,
+            naturalWidth: 32,
+          },
         }),
       } as any;
       const comment = new Comment(':stamp1: テスト', 1000, '', mockStampService);
       comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
       expect(mockCtx.drawImage).toHaveBeenCalled();
-      expect(mockCtx.strokeText).toHaveBeenCalledWith(' テスト', expect.any(Number), expect.any(Number));
+      expect(mockCtx.strokeText).toHaveBeenCalledWith(
+        ' テスト',
+        expect.any(Number),
+        expect.any(Number),
+      );
       expect(mockCtx.measureText).toHaveBeenCalledWith(' テスト');
     });
 
@@ -143,8 +150,11 @@ describe('Comment Class', () => {
       const mockStampService = {
         stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
         getStampImage: vi.fn().mockReturnValue({
-          complete: false,
-          naturalWidth: 0,
+          isAnimated: false,
+          staticImage: {
+            complete: false,
+            naturalWidth: 0,
+          },
         }),
       } as any;
       const comment = new Comment(':stamp1:', 1000, '', mockStampService);

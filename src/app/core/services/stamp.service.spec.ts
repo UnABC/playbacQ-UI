@@ -27,39 +27,39 @@ describe('StampService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
-    expect(service.stamps().size).toBe(0);
+    expect(service.getStamps().length).toBe(0);
   });
 
   it('should load stamps from API and populate stamps signal', () => {
-    service.loadStamps();
+    service.loadStamps().subscribe();
 
     const req = httpTestingController.expectOne('/traq-api/stamps');
     expect(req.request.method).toBe('GET');
     req.flush(mockStamps);
 
-    expect(service.stamps().size).toBe(2);
-    expect(service.stamps().get('stamp1')).toBe('stamp-id-1');
-    expect(service.stamps().get('stamp2')).toBe('stamp-id-2');
+    expect(service.getStamps().length).toBe(2);
+    expect(service.getStamps()[0]).toBe('stamp1');
+    expect(service.getStamps()[1]).toBe('stamp2');
   });
 
   it('should not send duplicate request if stamps are already loaded', () => {
-    service.loadStamps();
+    service.loadStamps().subscribe();
     const req = httpTestingController.expectOne('/traq-api/stamps');
     req.flush(mockStamps);
 
     // Call loadStamps again
-    service.loadStamps();
+    service.loadStamps().subscribe();
     httpTestingController.expectNone('/traq-api/stamps');
   });
 
   it('should handle error when loading stamps', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    service.loadStamps();
+    service.loadStamps().subscribe();
 
     const req = httpTestingController.expectOne('/traq-api/stamps');
     req.flush('Failed to fetch', { status: 500, statusText: 'Server Error' });
 
-    expect(service.stamps().size).toBe(0);
+    expect(service.getStamps().length).toBe(0);
     expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
@@ -69,7 +69,7 @@ describe('StampService', () => {
   });
 
   it('should return null from getStampImage when stamp is not found', () => {
-    service.loadStamps();
+    service.loadStamps().subscribe();
     const req = httpTestingController.expectOne('/traq-api/stamps');
     req.flush(mockStamps);
 
@@ -78,7 +78,7 @@ describe('StampService', () => {
   });
 
   it('should create and cache Image element when stamp is found', () => {
-    service.loadStamps();
+    service.loadStamps().subscribe();
     const req = httpTestingController.expectOne('/traq-api/stamps');
     req.flush(mockStamps);
 

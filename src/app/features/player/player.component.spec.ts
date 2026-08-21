@@ -11,6 +11,7 @@ import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import { StampService } from '../../core/services/stamp.service';
 import { EditVideoDialogComponent } from './edit-video-dialog.component';
 import { Comment } from './comment';
 import { of, Subject, throwError } from 'rxjs';
@@ -94,6 +95,12 @@ describe('PlayerComponent', () => {
     const mockUserService = {
       getUserIcon: vi.fn().mockReturnValue(of(new Blob())),
     };
+    const mockStampService = {
+      loadStamps: vi.fn().mockReturnValue(of(new Map<string, string>())),
+      getStamps: vi.fn().mockReturnValue([]),
+      getStampImage: vi.fn().mockReturnValue(null),
+      getStampURL: vi.fn().mockReturnValue(null),
+    };
     const mockMatDialog = {
       open: vi.fn(),
     };
@@ -121,6 +128,7 @@ describe('PlayerComponent', () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: UserService, useValue: mockUserService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: StampService, useValue: mockStampService },
       ],
     }).compileComponents();
 

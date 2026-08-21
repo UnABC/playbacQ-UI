@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Stamp } from '../models/stamp.model';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import { StampFrame, AnimatedStampData } from '../models/stamp.model';
+import { Observable, of } from 'rxjs';
+import { map, catchError, shareReplay } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -13,22 +15,28 @@ export class StampService {
 
   private stampSinal = signal<Map<string, string>>(new Map());
   private stampCache = new Map<string, AnimatedStampData>();
+  private loadStamps$?: Observable<Map<string, string>>;
 
   loadStamps() {
-    if (this.stampSinal().size > 0) return;
+    if (this.stampSinal().size > 0) return of(this.stampSinal());
+    if (this.loadStamps$) return this.loadStamps$;
 
-    this.http.get<Stamp[]>(this.traQApiUrl).subscribe({
-      next: (stamps) => {
+    this.loadStamps$ = this.http.get<Stamp[]>(this.traQApiUrl).pipe(
+      map((stamps) => {
         const stampMap = new Map<string, string>();
         stamps.forEach((stamp) => {
           stampMap.set(stamp.name, stamp.id);
         });
         this.stampSinal.set(stampMap);
-      },
-      error: (err) => {
+        return stampMap;
+      }),
+      catchError((err) => {
         console.error('Failed to load stamps:', err);
-      },
-    });
+        return of(new Map<string, string>());
+      }),
+      shareReplay(1),
+    );
+    return this.loadStamps$;
   }
 
   getStamps(): string[] {

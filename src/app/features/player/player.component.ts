@@ -24,7 +24,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { FormsModule } from '@angular/forms';
-import { Subscription, Subject, of } from 'rxjs';
+import { Subscription, Subject, of, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { VideoService } from '../../core/services/video.service';
 import { CommentService } from '../../core/services/comment.service';
@@ -146,14 +146,14 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
           this.decideYPosition();
         });
       } else {
-        this.commentService.getComments(this.videoId).subscribe((comments) => {
-          comments.map((c) => {
+        forkJoin({
+          stamps: this.stampService.loadStamps(),
+          comments: this.commentService.getComments(this.videoId),
+        }).subscribe(({ comments }) => {
+          comments.forEach((c) => {
             this.comments.push(new Comment(c.comment, c.timestamp, c.command, this.stampService));
           });
           this.decideYPosition();
-          if (comments.length > 0) {
-            this.stampService.loadStamps();
-          }
         });
       }
 

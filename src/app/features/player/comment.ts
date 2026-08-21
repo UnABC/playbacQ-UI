@@ -112,7 +112,7 @@ export class Comment {
     this.font = `bold ${this.fontSize}px ${fontName}`;
     this.height = this.fontSize * commentLineLength;
     // パース
-    if (this.stampService && this.stampService.getStamps().length > 0) {
+    if (this.stampService) {
       this.commentSegments = parseComment(text, (name) => this.stampService!.getStampImage(name));
     } else {
       this.commentSegments = [{ type: 'text', text }];
@@ -123,7 +123,12 @@ export class Comment {
       if (segment.type === 'text') {
         textLength += segment.text.length;
       } else if (segment.type === 'stamp') {
-        textLength += 1.2; // スタンプは文字数換算で1.2文字分とする
+        // スタンプは文字数換算で1.2文字分とする
+        let defaultStampSize = 1.2;
+        if (segment.effects?.includes('ex-large')) defaultStampSize *= 2.0;
+        if (segment.effects?.includes('large')) defaultStampSize *= 1.5;
+        if (segment.effects?.includes('small')) defaultStampSize *= 0.6;
+        textLength += defaultStampSize;
       }
     }
 
@@ -155,7 +160,6 @@ export class Comment {
     ctx.textBaseline = 'top';
 
     let drawX = currentX;
-    const stampSize = this.fontSize;
 
     for (const segment of this.commentSegments) {
       if (segment.type === 'text') {
@@ -164,6 +168,10 @@ export class Comment {
         drawX += ctx.measureText(segment.text).width;
       } else if (segment.type === 'stamp') {
         const stampData = this.stampService?.getStampImage(segment.name);
+        let StampSize = this.fontSize;
+        if (segment.effects?.includes('ex-large')) StampSize *= 2.0;
+        if (segment.effects?.includes('large')) StampSize *= 1.5;
+        if (segment.effects?.includes('small')) StampSize *= 0.6;
         if (stampData?.isAnimated && stampData.frames && stampData.totalDuration) {
           const now = performance.now();
           let currentFrameTime = now % stampData.totalDuration;
@@ -176,16 +184,16 @@ export class Comment {
             }
             currentFrameTime -= frame.delay;
           }
-          ctx.drawImage(targetBitmap, drawX, this.y, stampSize, stampSize);
-          drawX += stampSize;
+          ctx.drawImage(targetBitmap, drawX, this.y, StampSize, StampSize);
+          drawX += StampSize;
         } else if (stampData?.staticImage && stampData.staticImage.complete) {
-          ctx.drawImage(stampData.staticImage, drawX, this.y, stampSize, stampSize);
-          drawX += stampSize;
+          ctx.drawImage(stampData.staticImage, drawX, this.y, StampSize, StampSize);
+          drawX += StampSize;
         } else {
           // 画像がまだ読み込まれていない場合は、プレースホルダーを描画する
           ctx.fillStyle = '#cccccc';
-          ctx.fillRect(drawX, this.y, stampSize, stampSize);
-          drawX += stampSize;
+          ctx.fillRect(drawX, this.y, StampSize, StampSize);
+          drawX += StampSize;
         }
       }
     }

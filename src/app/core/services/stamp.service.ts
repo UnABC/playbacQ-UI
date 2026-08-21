@@ -12,7 +12,6 @@ export class StampService {
   private readonly traQApiUrl = '/traq-api/stamps';
 
   private stampSinal = signal<Map<string, string>>(new Map());
-  public readonly stamps = this.stampSinal.asReadonly();
   private stampCache = new Map<string, AnimatedStampData>();
 
   loadStamps() {
@@ -30,6 +29,10 @@ export class StampService {
         console.error('Failed to load stamps:', err);
       },
     });
+  }
+
+  getStamps(): string[] {
+    return Array.from(this.stampSinal().keys());
   }
 
   getStampImage(stampName: string): AnimatedStampData | null {
@@ -85,6 +88,12 @@ export class StampService {
         },
       });
     return cacheEntry;
+  }
+
+  getStampURL(stampName: string): string | null {
+    const stampId = this.stampSinal().get(stampName);
+    if (!stampId) return null;
+    return `${this.traQApiUrl}/${stampId}/image`;
   }
 
   private loadStaticImage(stampId: string, cacheEntry: AnimatedStampData) {

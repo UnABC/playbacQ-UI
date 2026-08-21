@@ -112,7 +112,7 @@ export class Comment {
     this.font = `bold ${this.fontSize}px ${fontName}`;
     this.height = this.fontSize * commentLineLength;
     // パース
-    if (this.stampService && this.stampService.stamps().size > 0) {
+    if (this.stampService && this.stampService.getStamps().length > 0) {
       this.commentSegments = parseComment(text, (name) => this.stampService!.getStampImage(name));
     } else {
       this.commentSegments = [{ type: 'text', text }];

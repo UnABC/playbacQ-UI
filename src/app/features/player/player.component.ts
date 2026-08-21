@@ -22,6 +22,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { FormsModule } from '@angular/forms';
 import { Subscription, Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { VideoService } from '../../core/services/video.service';
@@ -32,6 +34,7 @@ import { UserService } from '../../core/services/user.service';
 import { StampService } from '../../core/services/stamp.service';
 import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
+import { Stamp } from '../../core/models/stamp.model';
 import { environment } from '../../../environments/environment';
 import { Comment } from './comment';
 import { EditVideoDialogComponent } from './edit-video-dialog.component';
@@ -53,6 +56,8 @@ type Plyr = PlyrType;
     MatAutocompleteModule,
     MatInputModule,
     MatFormFieldModule,
+    ScrollingModule,
+    FormsModule,
     LinkifyPipe,
     RouterLink,
     MatSnackBarModule,
@@ -69,6 +74,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('commentCanvas') commentCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('tagActionWrapper') tagActionWrapperRef!: ElementRef<HTMLDivElement>;
   @ViewChild('moreMenuWrapper') moreMenuWrapperRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('stampActionWrapper') stampActionWrapperRef!: ElementRef<HTMLDivElement>;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -93,6 +99,8 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private tagSearchSubject = new Subject<string>();
   private userId: string | null = null;
 
+  readonly StampRowNum = 8;
+
   isEmbed = false;
   isLoading = true;
   videoMetadata: Video | null = null;
@@ -102,9 +110,12 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   isTagInputOpen = false;
   isCommentVisible = true;
   isMoreMenuOpen = false;
+  isStampPickerOpen = false;
   isLiked = false;
   likeCount = 0;
   userIconUrl: string | null = null;
+  stampSearchQuery = '';
+  hoveredStamp: string | null = null;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -661,6 +672,13 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         this.isMoreMenuOpen = false;
       }
     }
+    // スタンプピッカーが開いている状態で、スタンプピッカーの外側がクリックされたら閉じる
+    if (this.isStampPickerOpen && this.stampActionWrapperRef) {
+      const clickedInside = this.stampActionWrapperRef.nativeElement.contains(event.target as Node);
+      if (!clickedInside) {
+        this.isStampPickerOpen = false;
+      }
+    }
   }
 
   toggleMoreMenu(): void {
@@ -813,6 +831,48 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         alert('共有リンクのコピーに失敗しました。');
       },
     );
+  }
+
+  get stampRows(): string[][] {
+    const query = this.stampSearchQuery.trim().toLowerCase();
+    const filtered = query
+      ? this.stampService.getStamps().filter((s) => s.toLowerCase().includes(query))
+      : this.stampService.getStamps();
+    const rows: string[][] = [];
+    for (let i = 0; i < filtered.length; i += this.StampRowNum) {
+      rows.push(filtered.slice(i, i + this.StampRowNum));
+    }
+    return rows;
+  }
+
+  toggleStampPicker(): void {
+    this.isStampPickerOpen = !this.isStampPickerOpen;
+    if (this.isStampPickerOpen && this.stampService.getStamps().length === 0) {
+      this.stampService.loadStamps();
+    }
+  }
+
+  insertStamp(stamp: string): void {
+    const stampText = `:${stamp}:`;
+    const input = this.commentInputRef.nativeElement;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.value = input.value.substring(0, start) + stampText + input.value.substring(end);
+    const newPos = start + stampText.length;
+    input.focus();
+    input.setSelectionRange(newPos, newPos);
+  }
+
+  getStampImageUrl(stamp: string): string | null {
+    return this.stampService.getStampURL(stamp);
+  }
+
+  onStampHover(stamp: string | null): void {
+    this.hoveredStamp = stamp;
+  }
+
+  trackByRow(index: number, row: string[]): string {
+    return row[0] ?? index.toString();
   }
 
   ngOnDestroy(): void {

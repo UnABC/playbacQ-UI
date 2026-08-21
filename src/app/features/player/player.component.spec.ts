@@ -466,8 +466,7 @@ describe('PlayerComponent', () => {
     expect(mockReadyCallback).toBeTruthy();
     mockReadyCallback!();
 
-    const loopButton =
-      controls.querySelectorAll('.plyr__control')[1] as HTMLButtonElement;
+    const loopButton = controls.querySelectorAll('.plyr__control')[1] as HTMLButtonElement;
     expect(loopButton).toBeTruthy();
 
     const plyrInstance = (component as any).player as { loop: boolean };

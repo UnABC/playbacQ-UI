@@ -3,7 +3,7 @@ import { UploadComponent } from './upload.component';
 import { VideoService } from '../../core/services/video.service';
 import { UploadService } from '../../core/services/upload.service';
 import { vi } from 'vitest';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { HttpResponse, HttpEventType } from '@angular/common/http';
 
@@ -16,6 +16,7 @@ describe('UploadComponent', () => {
     const mockVideoService = {
       createVideo: vi.fn(),
       pollUploadProgress: vi.fn(),
+      uploadExVideo: vi.fn(),
     };
     const mockUploadService = {
       uploadToMinio: vi.fn(),
@@ -334,5 +335,56 @@ describe('UploadComponent', () => {
     await vi.runAllTimersAsync();
     fixture.detectChanges();
     expect((component as any).stepper.selectedIndex).toBe(3);
+  });
+  // import from external URL
+  it('should step to next after entering video info', async () => {
+    component.isImporting = true;
+    component.videoForm.controls.title.setValue('Test Video');
+    component.videoForm.controls.description.setValue('Test Description');
+    component.videoForm.controls.url.setValue('http://example.com/video.mp4');
+    component.importFromYouTube();
+    await vi.runAllTimersAsync();
+    fixture.detectChanges();
+    expect((component as any).stepper.selectedIndex).toBe(1);
+    expect(component.isImporting).toBe(true);
+    expect(component.selectedFile).toBeNull();
+  });
+  it('should fast upload external video and step to next', async () => {
+    component.isImporting = true;
+    component.videoForm.controls.title.setValue('Test Video');
+    component.videoForm.controls.description.setValue('Test Description');
+    component.videoForm.controls.url.setValue('http://example.com/video.mp4');
+    vi.spyOn(videoService, 'uploadExVideo').mockReturnValue(
+      of({
+        title: 'Test Video',
+        description: 'Test Description',
+        video_url: 'http://example.com/video.mp4',
+      } as any),
+    );
+    const createVideoSpy = vi.spyOn(videoService, 'createVideo');
+    component.startUpload();
+    await vi.runAllTimersAsync();
+    fixture.detectChanges();
+    expect(component.isUploadStarted).toBe(true);
+    expect(component.importedVideoTitle).toBe('Test Video');
+    expect(component.uploadStatusMessage).toBe('アップロードが完了しました！');
+    expect((component as any).stepper.selectedIndex).toBe(2);
+    expect(createVideoSpy).not.toHaveBeenCalled();
+  });
+  it('should alert if failed to create external video', async () => {
+    component.isImporting = true;
+    component.videoForm.controls.title.setValue('Test Video');
+    component.videoForm.controls.description.setValue('Test Description');
+    component.videoForm.controls.url.setValue('http://example.com/video.mp4');
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    vi.spyOn(videoService, 'uploadExVideo').mockReturnValue(
+      throwError(() => new Error('Failed to create external video')),
+    );
+    component.startUpload();
+    await vi.runAllTimersAsync();
+    fixture.detectChanges();
+    expect(alertSpy).toHaveBeenCalledWith('動画の作成に失敗しました。もう一度お試しください。');
+    expect((component as any).stepper.selectedIndex).toBe(1);
+    alertSpy.mockRestore();
   });
 });

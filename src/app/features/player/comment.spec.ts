@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Comment } from './comment';
+import { CommentSegment } from '../../shared/utils/stamp-parser';
+import * as stampParser from '../../shared/utils/stamp-parser';
 
 describe('Comment Class', () => {
   it('should initialize with the correct timestamp and position', () => {
@@ -83,6 +85,9 @@ describe('Comment Class', () => {
       mockCtx = {
         strokeText: vi.fn(),
         fillText: vi.fn(),
+        measureText: vi.fn().mockReturnValue({ width: 50 }),
+        drawImage: vi.fn(),
+        fillRect: vi.fn(),
       };
     });
     it('should skip drawing if currentTime is before appearTime', () => {
@@ -107,6 +112,7 @@ describe('Comment Class', () => {
       expect(mockCtx.textBaseline).toBe('top');
       expect(mockCtx.strokeText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
       expect(mockCtx.fillText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
+      expect(mockCtx.measureText).toHaveBeenCalledWith('テスト');
 
       // ueやshitaの場合はy座標が変わることも確認
       comment.position = 'ue';
@@ -118,6 +124,177 @@ describe('Comment Class', () => {
       comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
       expect(mockCtx.fillText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
       expect(mockCtx.strokeText).toHaveBeenCalledWith('テスト', expect.any(Number), 100);
+    });
+    it('should properly calculate stamp size based on effects when parsing segments in constructor', () => {
+      const mockStampService = {
+        getStampImage: vi.fn().mockReturnValue({
+          isAnimated: false,
+          staticImage: { complete: true, naturalWidth: 32 },
+        }),
+      } as any;
+      // default: 1.2
+      const commentNormal = new Comment(':stamp:', 0, '', mockStampService);
+      // ex-large: 1.2 * 2.0 = 2.4
+      const commentExLarge = new Comment(':stamp.ex-large:', 0, '', mockStampService);
+      // large: 1.2 * 1.5 = 1.8
+      const commentLarge = new Comment(':stamp.large:', 0, '', mockStampService);
+      // small: 1.2 * 0.6 = 0.72
+      const commentSmall = new Comment(':stamp.small:', 0, '', mockStampService);
+      const fontSize = (commentNormal as any).fontSize;
+      expect((commentNormal as any).textXsize).toBe(Math.round(fontSize * 1.2));
+      expect((commentExLarge as any).textXsize).toBe(Math.round(fontSize * 2.4));
+      expect((commentLarge as any).textXsize).toBe(Math.round(fontSize * 1.8));
+      expect((commentSmall as any).textXsize).toBe(Math.round(fontSize * 0.72));
+    });
+    it('should ignore unknown segment type when calculating textLength in constructor', () => {
+      const parseSpy = vi
+        .spyOn(stampParser, 'parseComment')
+        .mockReturnValue([{ type: 'unknown' } as unknown as CommentSegment]);
+      const mockStampService = { getStampImage: vi.fn() } as any;
+      const comment = new Comment('dummy', 0, '', mockStampService);
+      expect((comment as any).textXsize).toBe(0);
+      parseSpy.mockRestore();
+    });
+
+    it('should draw stamp segment when image is loaded', () => {
+      const mockStampService = {
+        stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
+        getStampImage: vi.fn().mockReturnValue({
+          isAnimated: false,
+          staticImage: {
+            complete: true,
+            naturalWidth: 32,
+          },
+        }),
+      } as any;
+      const comment = new Comment(':stamp1: テスト', 1000, '', mockStampService);
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.drawImage).toHaveBeenCalled();
+      expect(mockCtx.strokeText).toHaveBeenCalledWith(
+        ' テスト',
+        expect.any(Number),
+        expect.any(Number),
+      );
+      expect(mockCtx.measureText).toHaveBeenCalledWith(' テスト');
+    });
+
+    it('should draw placeholder when stamp image is not loaded yet', () => {
+      const mockStampService = {
+        stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
+        getStampImage: vi.fn().mockReturnValue({
+          isAnimated: false,
+          staticImage: {
+            complete: false,
+            naturalWidth: 0,
+          },
+        }),
+      } as any;
+      const comment = new Comment(':stamp1:', 1000, '', mockStampService);
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+    });
+    it('should draw animated stamp when available', () => {
+      const mockStampService = {
+        stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
+        getStampImage: vi.fn().mockReturnValue({
+          isAnimated: true,
+          frames: [
+            { bitmap: {} as ImageBitmap, delay: 0 },
+            { bitmap: {} as ImageBitmap, delay: 100 },
+            { bitmap: {} as ImageBitmap, delay: 100 },
+          ],
+          totalDuration: 200,
+        }),
+      } as any;
+      const comment = new Comment(':stamp1:', 1000, '', mockStampService);
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.drawImage).toHaveBeenCalled();
+    });
+    it('should properly calculate stamp size based on effects', () => {
+      const mockStampService = {
+        stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
+        getStampImage: vi.fn().mockReturnValue({
+          isAnimated: false,
+          staticImage: {
+            complete: true,
+            naturalWidth: 32,
+          },
+        }),
+      } as any;
+
+      const commentSeg: CommentSegment = {
+        type: 'stamp',
+        name: ':stamp1:',
+        stampData: null,
+        effects: ['ex-large'],
+      };
+      const comment = new Comment(':stamp1:', 1000, '', mockStampService);
+      (comment as any).commentSegments = [commentSeg];
+      (comment as any).fontSize = 50;
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.drawImage).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        100,
+        100,
+      );
+
+      const commentSeg2: CommentSegment = {
+        type: 'stamp',
+        name: ':stamp1:',
+        stampData: null,
+        effects: ['large'],
+      };
+      (comment as any).commentSegments = [commentSeg2];
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.drawImage).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        75,
+        75,
+      );
+
+      const commentSeg3: CommentSegment = {
+        type: 'stamp',
+        name: ':stamp1:',
+        stampData: null,
+        effects: ['small'],
+      };
+      (comment as any).commentSegments = [commentSeg3];
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.drawImage).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        30,
+        30,
+      );
+    });
+    it('should do nothing if segment type is unknown', () => {
+      const mockStampService = {
+        stamps: vi.fn().mockReturnValue(new Map([['stamp1', 'id1']])),
+        getStampImage: vi.fn().mockReturnValue({
+          isAnimated: false,
+          staticImage: {
+            complete: true,
+            naturalWidth: 32,
+          },
+        }),
+      } as any;
+      const commentSeg: CommentSegment = {
+        type: 'unknown' as any,
+        name: ':stamp1:',
+        stampData: null,
+        effects: [],
+      };
+      const comment = new Comment(':stamp1:', 1000, '', mockStampService);
+      (comment as any).commentSegments = [commentSeg];
+      comment.draw(mockCtx as CanvasRenderingContext2D, 1000);
+      expect(mockCtx.drawImage).not.toHaveBeenCalled();
+      expect(mockCtx.strokeText).not.toHaveBeenCalled();
+      expect(mockCtx.fillText).not.toHaveBeenCalled();
     });
   });
 });

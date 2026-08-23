@@ -17,7 +17,6 @@ import { MatIcon } from '@angular/material/icon';
 import { HttpEventType } from '@angular/common/http';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { switchMap, tap, filter } from 'rxjs/operators';
-import { url } from 'node:inspector';
 
 @Component({
   selector: 'app-upload',

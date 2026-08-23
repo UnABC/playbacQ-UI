@@ -122,6 +122,26 @@ describe('VideoService', () => {
     });
     req.flush(newVideo);
   });
+  it('should upload an external video', () => {
+    const newVideo = { ...mockVideo, video_id: '3', title: 'External Video' };
+    service
+      .uploadExVideo(
+        'External Video',
+        'Description for External Video',
+        'http://example.com/video.mp4',
+      )
+      .subscribe((video) => {
+        expect(video).toEqual(newVideo);
+      });
+    const req = httpTestingController.expectOne(`${environment.apiUrl}/api/ex-videos`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      title: 'External Video',
+      description: 'Description for External Video',
+      url: 'http://example.com/video.mp4',
+    });
+    req.flush(newVideo);
+  });
   it('should get video tags', () => {
     const mockTags = [
       { tag_id: 1, name: 'Tag1', status: 0 },

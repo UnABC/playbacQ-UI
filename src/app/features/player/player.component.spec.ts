@@ -53,6 +53,7 @@ describe('PlayerComponent', () => {
   let commentService: CommentService;
   let authService: AuthService;
   let userService: UserService;
+  let stampService: StampService;
   let messagesSubject: Subject<any>;
   beforeEach(async () => {
     messagesSubject = new Subject<any>();
@@ -138,6 +139,7 @@ describe('PlayerComponent', () => {
     commentService = TestBed.inject(CommentService);
     userService = TestBed.inject(UserService);
     authService = TestBed.inject(AuthService);
+    stampService = TestBed.inject(StampService);
 
     component.videoMetadata = {
       video_id: 'ABCD1234',
@@ -159,6 +161,37 @@ describe('PlayerComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+  // 初期化テスト
+  it('should call initPlayer on ngAfterViewInit when embeded', () => {
+    const initPlayerSpy = vi.spyOn(component as any, 'initPlayer').mockImplementation(() => {});
+    component.isEmbed = true;
+    component.ngAfterViewInit();
+
+    expect(initPlayerSpy).toHaveBeenCalled();
+  });
+  it('should output error when playerElement is null', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    component.hlsRef.nativeElement = null as any;
+    component.initPlayer();
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+  });
+  it('should skip HLS initialization when it is Youtube video', () => {
+    component.videoMetadata = {
+      video_id: 'ABCD1234',
+      title: 'Test Video',
+      user_id: 'user',
+      description: 'A test video',
+      duration: 40,
+      type: 'youtube',
+    } as Video;
+    const initPlyrSpy = vi.spyOn(component as any, 'initPlyr').mockImplementation(() => {});
+    const hlsIsSupportedSpy = vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+    component.initPlayer();
+    expect(hlsIsSupportedSpy).not.toHaveBeenCalled();
+    expect(initPlyrSpy).toHaveBeenCalled();
   });
   // Hls.jsの初期化テスト
   it('should initialize Hls.js when supported', async () => {
@@ -486,7 +519,54 @@ describe('PlayerComponent', () => {
 
     closestSpy.mockRestore();
   });
+  it('should unload External video captions', () => {
+    const video = component.hlsRef.nativeElement;
+    component.initPlyr(video);
+    const unloadModuleSpy = vi.fn();
+    const setOptionSpy = vi.fn();
+    (component as any).player.embed = {
+      unloadModule: unloadModuleSpy,
+      setOption: setOptionSpy,
+    };
+    component.videoMetadata = {
+      video_id: 'ABCD1234',
+      title: 'Test Video',
+      user_id: 'user',
+      description: 'A test video',
+      duration: 40,
+      type: 'youtube',
+    } as Video;
+    expect(mockPlayingCallback).toBeTruthy();
+    mockPlayingCallback!();
 
+    expect(unloadModuleSpy).toHaveBeenCalledWith('captions');
+    expect(unloadModuleSpy).toHaveBeenCalledWith('cc');
+    expect(setOptionSpy).toHaveBeenCalledWith('captions', 'track', {});
+  });
+  it('should unload External video captions when player is ready', () => {
+    const video = component.hlsRef.nativeElement;
+    component.initPlyr(video);
+
+    const unloadModuleSpy = vi.fn();
+    (component as any).player.embed = {
+      unloadModule: unloadModuleSpy,
+    };
+    component.videoMetadata = {
+      video_id: 'ABCD1234',
+      title: 'Test Video',
+      user_id: 'user',
+      description: 'A test video',
+      duration: 40,
+      type: 'youtube',
+    } as Video;
+    expect(mockReadyCallback).toBeTruthy();
+    mockReadyCallback!();
+
+    expect(unloadModuleSpy).toHaveBeenCalledWith('captions');
+    expect(unloadModuleSpy).toHaveBeenCalledWith('cc');
+  });
+
+  // タグ入力の開閉テスト
   it('Tag input opening and closing test', () => {
     expect(component.isTagInputOpen).toBe(false);
     component.openTagInput();
@@ -1029,6 +1109,82 @@ describe('PlayerComponent', () => {
     afterClosedSubject.next(null as any);
     expect(editVideoSpy).not.toHaveBeenCalled();
   });
+  // スタンプ検索テスト
+  it('should return stamp rows based on search input', () => {
+    const mockStamps: string[] = [
+      'stamp1',
+      'stamp2',
+      'stamp3',
+      'stamp4',
+      'stamp5',
+      'stamp6',
+      'stamp7',
+      'stamp8',
+      'stamp9',
+      'stamp10',
+      'test1',
+      'test2',
+      'test3',
+      'test4',
+      'test5',
+    ];
+    vi.spyOn(stampService, 'getStamps').mockReturnValue(mockStamps);
+    component.stampSearchQuery = 'stamp';
+    expect(component.stampRows).toEqual([
+      ['stamp1', 'stamp2', 'stamp3', 'stamp4', 'stamp5', 'stamp6', 'stamp7', 'stamp8'],
+      ['stamp9', 'stamp10'],
+    ]);
+  });
+  // スタンプピッカーの開閉テスト
+  it('should toggle stamp picker', () => {
+    vi.spyOn(stampService, 'getStamps').mockReturnValue([]);
+    const mockLoadStampsSpy = vi
+      .spyOn(stampService, 'loadStamps')
+      .mockReturnValue(of(new Map<string, string>()));
+    mockLoadStampsSpy.mockClear();
+    expect(component.isStampPickerOpen).toBe(false);
+    // 開
+    component.toggleStampPicker();
+    expect(component.isStampPickerOpen).toBe(true);
+    expect(mockLoadStampsSpy).toHaveBeenCalledTimes(1);
+    // 閉
+    mockLoadStampsSpy.mockClear();
+    component.toggleStampPicker();
+    expect(component.isStampPickerOpen).toBe(false);
+    expect(mockLoadStampsSpy).not.toHaveBeenCalled();
+
+    mockLoadStampsSpy.mockClear();
+    vi.spyOn(stampService, 'getStamps').mockReturnValue(['stamp1', 'stamp2']);
+    // 開
+    component.toggleStampPicker();
+    expect(component.isStampPickerOpen).toBe(true);
+    expect(mockLoadStampsSpy).not.toHaveBeenCalled();
+  });
+  it('should insert stamp into comment input when stamp is clicked', () => {
+    const commentInputEl = fixture.debugElement.query(By.css('.comment-input'))
+      .nativeElement as HTMLInputElement;
+    commentInputEl.value = 'Hello ';
+    component.insertStamp('stamp1');
+    expect(commentInputEl.value).toBe('Hello :stamp1:');
+  });
+  it('should call StampService.getStampURL', () => {
+    const getStampURLSpy = vi.spyOn(stampService, 'getStampURL').mockReturnValue('mock-url');
+    component.getStampImageUrl('stamp1');
+    expect(getStampURLSpy).toHaveBeenCalledWith('stamp1');
+  });
+  it('should store hovered stamp name when mouse hovered', () => {
+    component.onStampHover('stamp1');
+    expect(component.hoveredStamp).toBe('stamp1');
+  });
+  it('should trackByRow function return index', () => {
+    const index = 5;
+    const row = ['stamp1', 'stamp2'];
+    expect(component.trackByRow(index, row)).toBe('stamp1');
+
+    const index2 = 3;
+    const row2: string[] = [];
+    expect(component.trackByRow(index2, row2)).toBe('3');
+  });
   // 枠外クリックでメニューを閉じるテスト
   it('should close more menu when clicking outside', async () => {
     const wrapperElement = document.createElement('div');
@@ -1069,6 +1225,25 @@ describe('PlayerComponent', () => {
     const mockEvent = { target: insideElement } as unknown as MouseEvent;
     component.onDocumentClick(mockEvent);
     expect(component.isMoreMenuOpen).toBe(true);
+  });
+  it('should close stamp picker when clicking outside', async () => {
+    const stampPickerElement = document.createElement('div');
+    const outsideElement = document.createElement('button');
+    component.isStampPickerOpen = true;
+    component.stampActionWrapperRef = new ElementRef(stampPickerElement);
+    const mockEvent = { target: outsideElement } as unknown as MouseEvent;
+    component.onDocumentClick(mockEvent);
+    expect(component.isStampPickerOpen).toBe(false);
+  });
+  it('should not close stamp picker when clicking inside', async () => {
+    const stampPickerElement = document.createElement('div');
+    const insideElement = document.createElement('input');
+    stampPickerElement.appendChild(insideElement);
+    component.isStampPickerOpen = true;
+    component.stampActionWrapperRef = new ElementRef(stampPickerElement);
+    const mockEvent = { target: insideElement } as unknown as MouseEvent;
+    component.onDocumentClick(mockEvent);
+    expect(component.isStampPickerOpen).toBe(true);
   });
   it('should toggle more menu', () => {
     component.isMoreMenuOpen = false;

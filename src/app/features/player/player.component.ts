@@ -34,7 +34,6 @@ import { UserService } from '../../core/services/user.service';
 import { StampService } from '../../core/services/stamp.service';
 import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
-import { Stamp } from '../../core/models/stamp.model';
 import { environment } from '../../../environments/environment';
 import { Comment } from './comment';
 import { EditVideoDialogComponent } from './edit-video-dialog.component';
@@ -397,12 +396,10 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       const countViewTime = Math.min((this.videoMetadata?.duration ?? 0) / 4, 300) * 1000;
       this.player.on('ready', () => {
         if (this.isExternalVideo) {
-          if (this.player) {
-            try {
-              (this.player as any).embed?.unloadModule('captions');
-              (this.player as any).embed?.unloadModule('cc');
-            } catch (e) {}
-          }
+          try {
+            (this.player as any).embed?.unloadModule('captions');
+            (this.player as any).embed?.unloadModule('cc');
+          } catch (e) {}
         }
 
         // Plyrの要素APIを使用して、DOM構造の変更（特にYouTube iframe化）に依存しないようにする

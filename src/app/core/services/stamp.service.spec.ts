@@ -4,6 +4,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { StampService } from './stamp.service';
 import { Stamp } from '../models/stamp.model';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { of } from 'rxjs';
+import * as gifuctJs from 'gifuct-js';
+
+vi.mock('gifuct-js', () => ({
+  parseGIF: vi.fn(),
+  decompressFrames: vi.fn(),
+}));
 
 describe('StampService', () => {
   let service: StampService;
@@ -14,6 +21,26 @@ describe('StampService', () => {
   ];
 
   beforeEach(() => {
+    vi.stubGlobal(
+      'ImageData',
+      class {
+        data: Uint8ClampedArray;
+        width: number;
+        height: number;
+        constructor(data: Uint8ClampedArray, width: number, height: number) {
+          this.data = data;
+          this.width = width;
+          this.height = height;
+        }
+      },
+    );
+    vi.stubGlobal(
+      'createImageBitmap',
+      vi
+        .fn()
+        .mockImplementation(async (data: unknown) => ({ image: data }) as unknown as ImageBitmap),
+    );
+
     TestBed.configureTestingModule({
       providers: [StampService, provideHttpClient(), provideHttpClientTesting()],
     });
@@ -23,6 +50,8 @@ describe('StampService', () => {
 
   afterEach(() => {
     httpTestingController.verify();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it('should be created', () => {
@@ -76,6 +105,20 @@ describe('StampService', () => {
     const result = service.getStampImage('unknown-stamp');
     expect(result).toBeNull();
   });
+  it('should return existing observable if request is in-flight', () => {
+    let result1: Map<string, string> | undefined;
+    let result2: Map<string, string> | undefined;
+
+    service.loadStamps().subscribe((data) => (result1 = data));
+    const req = httpTestingController.expectOne('/traq-api/stamps');
+    // 2回目の呼び出しは、まだリクエストが完了していないため、同じObservableを返す
+    service.loadStamps().subscribe((data) => (result2 = data));
+    httpTestingController.expectNone('/traq-api/stamps');
+    req.flush(mockStamps);
+
+    expect(result1?.get('stamp1')).toBe('stamp-id-1');
+    expect(result2?.get('stamp1')).toBe('stamp-id-1');
+  });
 
   it('should create and cache Image element when stamp is found', () => {
     service.loadStamps().subscribe();
@@ -94,5 +137,99 @@ describe('StampService', () => {
     // Second call should return cached instance without additional HTTP request
     const stampData2 = service.getStampImage('stamp1');
     expect(stampData2).toBe(stampData1);
+  });
+
+  it('should return proper url for each stamp', () => {
+    service.loadStamps().subscribe();
+    const req = httpTestingController.expectOne('/traq-api/stamps');
+    req.flush(mockStamps);
+
+    expect(service.getStampURL('stamp1')).toBe('/traq-api/stamps/stamp-id-1/image');
+    expect(service.getStampURL('stamp2')).toBe('/traq-api/stamps/stamp-id-2/image');
+    expect(service.getStampURL('unknown-stamp')).toBeNull();
+  });
+  it('should return static image for non-animated stamp', () => {
+    service.loadStamps().subscribe();
+    const req = httpTestingController.expectOne('/traq-api/stamps');
+    req.flush(mockStamps);
+
+    const mockSingleFrame = [
+      {
+        patch: [0, 0, 0, 255],
+        dims: { width: 1, height: 1 },
+        delay: 0,
+      },
+    ];
+
+    vi.mocked(gifuctJs.parseGIF).mockReturnValue({} as any);
+    vi.mocked(gifuctJs.decompressFrames).mockReturnValue(mockSingleFrame as any);
+    const stampData = service.getStampImage('stamp1');
+    expect(stampData).toBeTruthy();
+    const imageReq = httpTestingController.expectOne('/traq-api/stamps/stamp-id-1/image');
+    imageReq.flush(new ArrayBuffer(8));
+
+    expect(stampData?.isAnimated).toBe(false);
+    expect(stampData?.staticImage).toBeInstanceOf(HTMLImageElement);
+    expect(stampData?.staticImage?.src).toContain('/traq-api/stamps/stamp-id-1/image');
+    expect(stampData?.frames).toBeUndefined();
+  });
+  it('should fallback to static image when image HTTP request fails', () => {
+    service.loadStamps().subscribe();
+    const req = httpTestingController.expectOne('/traq-api/stamps');
+    req.flush(mockStamps);
+
+    const stampData = service.getStampImage('stamp1');
+    expect(stampData).toBeTruthy();
+
+    const imageReq = httpTestingController.expectOne('/traq-api/stamps/stamp-id-1/image');
+    imageReq.flush(new ArrayBuffer(0), { status: 404, statusText: 'Not Found' });
+
+    expect(stampData?.isAnimated).toBe(false);
+    expect(stampData?.staticImage).toBeInstanceOf(HTMLImageElement);
+    expect(stampData?.staticImage?.src).toContain('/traq-api/stamps/stamp-id-1/image');
+    expect(stampData?.frames).toBeUndefined();
+  });
+  it('should get animated stamp image when available', async () => {
+    service.loadStamps().subscribe();
+    const req = httpTestingController.expectOne('/traq-api/stamps');
+    req.flush(mockStamps);
+
+    const mockFrames = [
+      {
+        patch: [0, 0, 0, 255],
+        dims: { width: 1, height: 1 },
+        delay: 100,
+      },
+      {
+        patch: [255, 0, 0, 255],
+        dims: { width: 1, height: 1 },
+        delay: 150,
+      },
+      {
+        patch: [0, 255, 0, 255],
+        dims: { width: 1, height: 1 },
+        delay: undefined,
+      },
+    ];
+
+    vi.mocked(gifuctJs.parseGIF).mockReturnValue({} as any);
+    vi.mocked(gifuctJs.decompressFrames).mockReturnValue(mockFrames as any);
+
+    const stampData = service.getStampImage('stamp1');
+    expect(stampData).toBeTruthy();
+    expect(stampData?.isAnimated).toBe(false);
+
+    const imageReq = httpTestingController.expectOne('/traq-api/stamps/stamp-id-1/image');
+    imageReq.flush(new ArrayBuffer(8));
+
+    await vi.waitFor(() => {
+      expect(stampData?.isAnimated).toBe(true);
+    });
+
+    expect(stampData?.frames?.length).toBe(3);
+    expect(stampData?.frames?.[0].delay).toBe(100);
+    expect(stampData?.frames?.[1].delay).toBe(150);
+    expect(stampData?.frames?.[2].delay).toBe(200); // default delay
+    expect(stampData?.totalDuration).toBe(450);
   });
 });

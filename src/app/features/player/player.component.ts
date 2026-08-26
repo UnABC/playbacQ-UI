@@ -34,6 +34,7 @@ import { UserService } from '../../core/services/user.service';
 import { StampService } from '../../core/services/stamp.service';
 import { Video } from '../../core/models/video.model';
 import { Tag } from '../../core/models/tag.model';
+import { Stamp } from '../../core/models/stamp.model';
 import { environment } from '../../../environments/environment';
 import { Comment } from './comment';
 import { EditVideoDialogComponent } from './edit-video-dialog.component';
@@ -114,7 +115,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   likeCount = 0;
   userIconUrl: string | null = null;
   stampSearchQuery = '';
-  hoveredStamp: string | null = null;
+  hoveredStamp: Stamp | null = null;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -830,12 +831,13 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-  get stampRows(): string[][] {
+  get stampRows(): Stamp[][] {
     const query = this.stampSearchQuery.trim().toLowerCase();
+    const stamps = this.stampService.getStamps();
     const filtered = query
-      ? this.stampService.getStamps().filter((s) => s.toLowerCase().includes(query))
-      : this.stampService.getStamps();
-    const rows: string[][] = [];
+      ? stamps.filter((s) => s.name.toLowerCase().includes(query))
+      : stamps;
+    const rows: Stamp[][] = [];
     for (let i = 0; i < filtered.length; i += this.StampRowNum) {
       rows.push(filtered.slice(i, i + this.StampRowNum));
     }
@@ -845,12 +847,12 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   toggleStampPicker(): void {
     this.isStampPickerOpen = !this.isStampPickerOpen;
     if (this.isStampPickerOpen && this.stampService.getStamps().length === 0) {
-      this.stampService.loadStamps();
+      this.stampService.loadStamps().subscribe();
     }
   }
 
-  insertStamp(stamp: string): void {
-    const stampText = `:${stamp}:`;
+  insertStamp(stampName: string): void {
+    const stampText = `:${stampName}:`;
     const input = this.commentInputRef.nativeElement;
     const start = input.selectionStart ?? input.value.length;
     const end = input.selectionEnd ?? input.value.length;
@@ -860,16 +862,16 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     input.setSelectionRange(newPos, newPos);
   }
 
-  getStampImageUrl(stamp: string): string | null {
-    return this.stampService.getStampURL(stamp);
+  getStampImageUrl(stampName: string): string | null {
+    return this.stampService.getStampURL(stampName);
   }
 
-  onStampHover(stamp: string | null): void {
+  onStampHover(stamp: Stamp | null): void {
     this.hoveredStamp = stamp;
   }
 
-  trackByRow(index: number, row: string[]): string {
-    return row[0] ?? index.toString();
+  trackByRow(index: number, row: Stamp[]): string {
+    return row[0]?.id ?? index.toString();
   }
 
   ngOnDestroy(): void {

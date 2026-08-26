@@ -13,38 +13,39 @@ export class StampService {
   private http = inject(HttpClient);
   private readonly traQApiUrl = '/traq-api/stamps';
 
-  private stampSinal = signal<Map<string, string>>(new Map());
+  private stampsSignal = signal<Stamp[]>([]);
+  private stampMap = new Map<string, string>();
   private stampCache = new Map<string, AnimatedStampData>();
-  private loadStamps$?: Observable<Map<string, string>>;
+  private loadStamps$?: Observable<Stamp[]>;
 
-  loadStamps() {
-    if (this.stampSinal().size > 0) return of(this.stampSinal());
+  loadStamps(): Observable<Stamp[]> {
+    if (this.stampsSignal().length > 0) return of(this.stampsSignal());
     if (this.loadStamps$) return this.loadStamps$;
 
     this.loadStamps$ = this.http.get<Stamp[]>(this.traQApiUrl).pipe(
       map((stamps) => {
-        const stampMap = new Map<string, string>();
+        this.stampMap.clear();
         stamps.forEach((stamp) => {
-          stampMap.set(stamp.name, stamp.id);
+          this.stampMap.set(stamp.name, stamp.id);
         });
-        this.stampSinal.set(stampMap);
-        return stampMap;
+        this.stampsSignal.set(stamps);
+        return stamps;
       }),
       catchError((err) => {
         console.error('Failed to load stamps:', err);
-        return of(new Map<string, string>());
+        return of([]);
       }),
       shareReplay(1),
     );
     return this.loadStamps$;
   }
 
-  getStamps(): string[] {
-    return Array.from(this.stampSinal().keys());
+  getStamps(): Stamp[] {
+    return this.stampsSignal();
   }
 
   getStampImage(stampName: string): AnimatedStampData | null {
-    const stampId = this.stampSinal().get(stampName);
+    const stampId = this.stampMap.get(stampName);
     if (!stampId) return null;
 
     if (this.stampCache.has(stampId)) {
@@ -99,7 +100,7 @@ export class StampService {
   }
 
   getStampURL(stampName: string): string | null {
-    const stampId = this.stampSinal().get(stampName);
+    const stampId = this.stampMap.get(stampName);
     if (!stampId) return null;
     return `${this.traQApiUrl}/${stampId}/image`;
   }

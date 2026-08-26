@@ -67,8 +67,8 @@ describe('StampService', () => {
     req.flush(mockStamps);
 
     expect(service.getStamps().length).toBe(2);
-    expect(service.getStamps()[0]).toBe('stamp1');
-    expect(service.getStamps()[1]).toBe('stamp2');
+    expect(service.getStamps()[0]).toEqual({ id: 'stamp-id-1', name: 'stamp1' });
+    expect(service.getStamps()[1]).toEqual({ id: 'stamp-id-2', name: 'stamp2' });
   });
 
   it('should not send duplicate request if stamps are already loaded', () => {
@@ -106,8 +106,8 @@ describe('StampService', () => {
     expect(result).toBeNull();
   });
   it('should return existing observable if request is in-flight', () => {
-    let result1: Map<string, string> | undefined;
-    let result2: Map<string, string> | undefined;
+    let result1: Stamp[] | undefined;
+    let result2: Stamp[] | undefined;
 
     service.loadStamps().subscribe((data) => (result1 = data));
     const req = httpTestingController.expectOne('/traq-api/stamps');
@@ -116,8 +116,8 @@ describe('StampService', () => {
     httpTestingController.expectNone('/traq-api/stamps');
     req.flush(mockStamps);
 
-    expect(result1?.get('stamp1')).toBe('stamp-id-1');
-    expect(result2?.get('stamp1')).toBe('stamp-id-1');
+    expect(result1?.[0].id).toBe('stamp-id-1');
+    expect(result2?.[0].id).toBe('stamp-id-1');
   });
 
   it('should create and cache Image element when stamp is found', () => {

@@ -19,6 +19,7 @@ import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import Hls from 'hls.js';
 import { Video } from '../../core/models/video.model';
+import { Stamp } from '../../core/models/stamp.model';
 import { environment } from '../../../environments/environment';
 
 let mockPlayingCallback: Function | null = null;
@@ -1111,28 +1112,28 @@ describe('PlayerComponent', () => {
   });
   // スタンプ検索テスト
   it('should return stamp rows based on search input', () => {
-    const mockStamps: string[] = [
-      'stamp1',
-      'stamp2',
-      'stamp3',
-      'stamp4',
-      'stamp5',
-      'stamp6',
-      'stamp7',
-      'stamp8',
-      'stamp9',
-      'stamp10',
-      'test1',
-      'test2',
-      'test3',
-      'test4',
-      'test5',
+    const mockStamps: Stamp[] = [
+      { id: 'id-1', name: 'stamp1' },
+      { id: 'id-2', name: 'stamp2' },
+      { id: 'id-3', name: 'stamp3' },
+      { id: 'id-4', name: 'stamp4' },
+      { id: 'id-5', name: 'stamp5' },
+      { id: 'id-6', name: 'stamp6' },
+      { id: 'id-7', name: 'stamp7' },
+      { id: 'id-8', name: 'stamp8' },
+      { id: 'id-9', name: 'stamp9' },
+      { id: 'id-10', name: 'stamp10' },
+      { id: 'id-11', name: 'test1' },
+      { id: 'id-12', name: 'test2' },
+      { id: 'id-13', name: 'test3' },
+      { id: 'id-14', name: 'test4' },
+      { id: 'id-15', name: 'test5' },
     ];
     vi.spyOn(stampService, 'getStamps').mockReturnValue(mockStamps);
     component.stampSearchQuery = 'stamp';
     expect(component.stampRows).toEqual([
-      ['stamp1', 'stamp2', 'stamp3', 'stamp4', 'stamp5', 'stamp6', 'stamp7', 'stamp8'],
-      ['stamp9', 'stamp10'],
+      mockStamps.slice(0, 8),
+      mockStamps.slice(8, 10),
     ]);
   });
   // スタンプピッカーの開閉テスト
@@ -1140,7 +1141,7 @@ describe('PlayerComponent', () => {
     vi.spyOn(stampService, 'getStamps').mockReturnValue([]);
     const mockLoadStampsSpy = vi
       .spyOn(stampService, 'loadStamps')
-      .mockReturnValue(of(new Map<string, string>()));
+      .mockReturnValue(of([]));
     mockLoadStampsSpy.mockClear();
     expect(component.isStampPickerOpen).toBe(false);
     // 開
@@ -1154,7 +1155,10 @@ describe('PlayerComponent', () => {
     expect(mockLoadStampsSpy).not.toHaveBeenCalled();
 
     mockLoadStampsSpy.mockClear();
-    vi.spyOn(stampService, 'getStamps').mockReturnValue(['stamp1', 'stamp2']);
+    vi.spyOn(stampService, 'getStamps').mockReturnValue([
+      { id: 'id-1', name: 'stamp1' },
+      { id: 'id-2', name: 'stamp2' },
+    ]);
     // 開
     component.toggleStampPicker();
     expect(component.isStampPickerOpen).toBe(true);
@@ -1173,16 +1177,20 @@ describe('PlayerComponent', () => {
     expect(getStampURLSpy).toHaveBeenCalledWith('stamp1');
   });
   it('should store hovered stamp name when mouse hovered', () => {
-    component.onStampHover('stamp1');
-    expect(component.hoveredStamp).toBe('stamp1');
+    const mockStamp: Stamp = { id: 'stamp-1', name: 'stamp1' };
+    component.onStampHover(mockStamp);
+    expect(component.hoveredStamp).toEqual(mockStamp);
   });
   it('should trackByRow function return index', () => {
     const index = 5;
-    const row = ['stamp1', 'stamp2'];
-    expect(component.trackByRow(index, row)).toBe('stamp1');
+    const row: Stamp[] = [
+      { id: 'stamp-id-1', name: 'stamp1' },
+      { id: 'stamp-id-2', name: 'stamp2' },
+    ];
+    expect(component.trackByRow(index, row)).toBe('stamp-id-1');
 
     const index2 = 3;
-    const row2: string[] = [];
+    const row2: Stamp[] = [];
     expect(component.trackByRow(index2, row2)).toBe('3');
   });
   // 枠外クリックでメニューを閉じるテスト
